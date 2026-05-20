@@ -1,9 +1,10 @@
-from collections import deque
+import heapq
 
 def solve(
     grid: list[list[dict[str, int]]],
     start: tuple[int, int],
     goal: tuple[int, int],
+    h_func: function,
     max_steps: int = 500,
 ) -> list[tuple[int, int]]:
     if not grid or not grid[0]:
@@ -22,7 +23,7 @@ def solve(
     if not max_steps:
         max_steps = float("inf")
     
-    q = deque([[start, [start], 0]])
+    q = [[0, 0, start, [start]]]
     visited = set()
     moves = (
         ((-1, 0), "up", "down"),
@@ -32,7 +33,7 @@ def solve(
     )
     
     while q:
-        curr_pos, curr_path, curr_step = q.popleft()
+        _, curr_step, curr_pos, curr_path = heapq.heappop(q)
         
         if curr_pos in visited or curr_step >= max_steps:
             continue
@@ -54,12 +55,15 @@ def solve(
             if grid[nxt_x][nxt_y].get(opposite_wall, 1) == 1:
                 continue
             
+            new_h = h_func(start, goal)
             new_path = curr_path + [(nxt_x, nxt_y)]
-            q.append([(nxt_x, nxt_y), new_path, curr_step + 1])
+            heapq.heappush(q, [new_h, curr_step+1, (nxt_x, nxt_y), new_path])
             
     return []
 
 if __name__ == "__main__":
+    import heuristics.euclidean as euclidean
+    
     def print_maze(grid: list[list[dict[str, int]]]) -> None:
         for row in grid:
             for col in row:
@@ -81,4 +85,4 @@ if __name__ == "__main__":
     
     start = (4, 4)
     goal = (3, 6)
-    print(solve(grid, start, goal))
+    print(solve(grid, start, goal, euclidean.compute))

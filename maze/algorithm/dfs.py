@@ -1,4 +1,4 @@
-def dfs_solve(
+def solve(
     grid: list[list[dict[str, int]]],
     start: tuple[int, int],
     goal: tuple[int, int],
@@ -24,6 +24,9 @@ def dfs_solve(
         return []
     if start == goal:
         return [start]
+    
+    if not max_steps:
+        max_steps = float("inf")
 
     visited: set[tuple[int, int]] = set()
     directions = [
