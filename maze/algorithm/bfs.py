@@ -57,7 +57,7 @@ def solve(
             new_path = curr_path + [(nxt_x, nxt_y)]
             q.append([(nxt_x, nxt_y), new_path, curr_step + 1])
             
-    return []
+    return curr_path
 
 if __name__ == "__main__":
     def print_maze(grid: list[list[dict[str, int]]]) -> None:

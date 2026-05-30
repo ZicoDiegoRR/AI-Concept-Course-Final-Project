@@ -59,7 +59,7 @@ def solve(
             new_path = curr_path + [(nxt_x, nxt_y)]
             heapq.heappush(q, [new_h, curr_step+1, (nxt_x, nxt_y), new_path])
             
-    return []
+    return curr_path
 
 if __name__ == "__main__":
     import heuristics.euclidean as euclidean

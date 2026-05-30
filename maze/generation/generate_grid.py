@@ -26,7 +26,6 @@ def create(
             elif j == len(grid[0]) - 1: col["right"] = 1
             
             no_walls = [key for key, val in col.items() if val == 0]
-            print(len(no_walls))
             if len(no_walls) >= 2:
                 num_add_walls = random.randint(1, len(no_walls) - 1)
                 select_walls = random.sample(no_walls, k=num_add_walls)
@@ -40,6 +39,36 @@ def create(
                         
                         adj_x, adj_y = i+dx, j+dy
                         grid[adj_x][adj_y][adj_wall] = 1
+                        
+    for i, row in enumerate(grid):
+        for j, col in enumerate(row):
+            walls = [key for key, val in col.items() if val == 1]
+            if len(walls) == 4:
+                banned_key = []
+                if i == 0:
+                    banned_key.append("up")
+                elif i == len(grid) - 1:
+                    banned_key.append("down")
+                    
+                if j == 0:
+                    banned_key.append("left")
+                elif j == len(grid[0]) - 1:
+                    banned_key.append("right")
+                    
+                potential_no_wall = [key for key in walls if key not in banned_key]
+                num_remove_wall = random.randint(1, 2)
+                
+                all_wall_remove = random.sample(potential_no_wall, k=num_remove_wall)
+                for key in all_wall_remove:
+                    opposite_wall = opposite[key]
+                    
+                    dx, dy = moves[key]
+                    opp_x, opp_y = i+dx, j+dy
+                    
+                    #print((i, j), key, (opp_x, opp_y), opposite_wall)
+                    
+                    col[key] = 0
+                    grid[opp_x][opp_y][opposite_wall] = 0
         
     return grid
     
