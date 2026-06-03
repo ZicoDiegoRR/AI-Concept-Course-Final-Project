@@ -1,24 +1,19 @@
-from .create_solution import *
-from .generate_grid import create
+from .generate_grid import create, add_hiding_spot
+from .flood_fill import perform_connection
 
 def generate(
     rows: int,
     cols: int,
     wall_prob: float = 0.5,
+    hiding_prob: float = 0.25,
 ) -> tuple[list[list[dict[str, int]]], tuple[int], tuple[int]]:
-    init_maze = create(
-        rows=rows, cols=cols, wall_prob=wall_prob
-    )
+    init_maze = create(rows=rows, cols=cols, wall_prob=wall_prob)
     
-    start, goal, path = add(init_maze)
-    if path is None:
-        print("ERR: Failed to add solution to the maze.")
-        return None, None, None
+    connected_maze = perform_connection(init_maze)
     
-    new_maze = apply_to_grid_from_goal(
-        grid=init_maze, path=path
-    )
+    start = (0, 0)
+    goal = (rows-1, cols-1)
     
-    print(new_maze)
+    final_maze = add_hiding_spot(grid=connected_maze, hiding_prob=hiding_prob)
     
-    return start, goal, new_maze
+    return start, goal, connected_maze

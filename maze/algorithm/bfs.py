@@ -2,9 +2,8 @@ from collections import deque
 
 def solve(
     grid: list[list[dict[str, int]]],
+    visited: list[list[tuple[int, int]]],
     start: tuple[int, int],
-    goal: tuple[int, int],
-    max_steps: int = 500,
 ) -> list[tuple[int, int]]:
     if not grid or not grid[0]:
         return []
@@ -14,16 +13,9 @@ def solve(
 
     if not (0 <= start[0] < rows and 0 <= start[1] < cols):
         return []
-    if not (0 <= goal[0] < rows and 0 <= goal[1] < cols):
-        return []
-    if start == goal:
-        return [start]
     
-    if not max_steps:
-        max_steps = float("inf")
-    
-    q = deque([[start, [start], 0]])
-    visited = set()
+    q = deque([[start, [start]]])
+    seen = set()
     moves = (
         ((-1, 0), "up", "down"),
         ((1, 0), "down", "up"),
@@ -32,22 +24,22 @@ def solve(
     )
     
     while q:
-        curr_pos, curr_path, curr_step = q.popleft()
+        curr_pos, curr_path = q.popleft()
         
-        if curr_pos in visited or curr_step >= max_steps:
-            continue
-        
-        if curr_pos == goal:
+        if curr_pos not in visited:
             return curr_path
         
-        visited.add(curr_pos)
+        if curr_pos in seen:
+            continue
+
+        seen.add(curr_pos)
         curr_x, curr_y = curr_pos
         for (dx, dy), wall, opposite_wall in moves:
             nxt_x, nxt_y = curr_x + dx, curr_y + dy
 
             if not (0 <= nxt_x < rows and 0 <= nxt_y < cols):
                 continue
-            if (nxt_x, nxt_y) in visited:
+            if (nxt_x, nxt_y) in seen:
                 continue
             if grid[curr_x][curr_y].get(wall, 1) == 1:
                 continue
@@ -55,9 +47,9 @@ def solve(
                 continue
             
             new_path = curr_path + [(nxt_x, nxt_y)]
-            q.append([(nxt_x, nxt_y), new_path, curr_step + 1])
+            q.append([(nxt_x, nxt_y), new_path])
             
-    return curr_path
+    return []
 
 if __name__ == "__main__":
     def print_maze(grid: list[list[dict[str, int]]]) -> None:
@@ -80,5 +72,5 @@ if __name__ == "__main__":
     print()
     
     start = (4, 4)
-    goal = (3, 6)
-    print(solve(grid, start, goal))
+    visited = [(4, 4), (3, 4), (5, 4), (4, 5), (3, 3), (3, 5), (5, 3), (5, 5)]
+    print(solve(grid, visited, start))

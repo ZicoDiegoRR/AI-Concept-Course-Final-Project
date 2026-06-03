@@ -5,7 +5,6 @@ def solve(
     start: tuple[int, int],
     goal: tuple[int, int],
     h_func: function,
-    max_steps: int = 500,
 ) -> list[tuple[int, int]]:
     if not grid or not grid[0]:
         return []
@@ -20,10 +19,8 @@ def solve(
     if start == goal:
         return [start]
     
-    if not max_steps:
-        max_steps = float("inf")
     
-    q = [[0, 0, 0, start, [start]]]
+    q = [[0, 0, start, [start]]]
     visited = set()
     moves = (
         ((-1, 0), "up", "down"),
@@ -33,12 +30,12 @@ def solve(
     )
     
     while q:
-        _, curr_g, curr_step, curr_pos, curr_path = heapq.heappop(q)
+        _, curr_g, curr_pos, curr_path = heapq.heappop(q)
         
         if curr_pos == goal:
             return curr_path
         
-        if curr_pos in visited or curr_step >= max_steps:
+        if curr_pos in visited:
             continue
         
         visited.add(curr_pos)
@@ -59,7 +56,7 @@ def solve(
             new_g = curr_g + 1
             new_f = new_g + h_func(curr_pos, goal)
             
-            heapq.heappush(q, [new_f, new_g, curr_step+1, (nxt_x, nxt_y), new_path])
+            heapq.heappush(q, [new_f, new_g, (nxt_x, nxt_y), new_path])
             
     return curr_path
 

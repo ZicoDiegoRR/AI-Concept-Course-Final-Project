@@ -16,6 +16,7 @@ class Player:
         self.curr_col = init_cols
         self.color_rgb = color
         
+        self.spot_agent = False
         self.is_hiding = False
         self.is_walking = True
         self.walk_speed_mult = 1
@@ -23,17 +24,17 @@ class Player:
         
         self.vision_range = vision_range
         self.known_map = [[False for _ in range(col_size)] for _ in range(row_size)]
-        self.curr_view_cell = None
+        self.curr_view_cell = []
     
     def cell_in_view(
         self, 
         maze: list[list[dict[str, int]]],
     ) -> list[tuple[int, int]]:
         if not isinstance(maze, list):
-            return None
+            return
         
         if not isinstance(maze[0], list):
-            return None
+            return
         
         q = deque([[0, (self.curr_row, self.curr_col)]])
         visited = set()
@@ -63,8 +64,6 @@ class Player:
         self.curr_view_cell = res
         for (cx, cy) in res:
             self.known_map[cx][cy] = True
-              
-        return res
     
     def propagate_noise(
         self,
@@ -124,18 +123,30 @@ class Player:
         
     def move_to(
         self, 
+        maze: list[list[dict[str, int]]],
         new_row: int,
         new_col: int,
     ) -> None:
         if new_row is not None and new_col is not None:
             self.curr_row = new_row
             self.curr_col = new_col
+            
+            self.cell_in_view(maze)
 
-    def set_crouch(self) -> None:
-        self.is_walking = False
-
-    def set_walk(self) -> None:
-        self.is_walking = True
+    def toggle_movement(self):
+        self.is_walking = not self.is_walking
+        
+    def toggle_hiding(
+        self,
+        val: bool,
+    ) -> None:
+        self.is_hiding = val
+        
+    def toggle_see_agent(
+        self,
+        see: bool
+    ) -> None:
+        self.spot_agent = see
         
     @property
     def get_speed(self) -> float:
@@ -147,3 +158,19 @@ class Player:
     @property
     def get_pos(self) -> tuple[int, int]:
         return (self.curr_row, self.curr_col)
+    
+    @property
+    def get_curr_cell_view(self):
+        return self.curr_view_cell
+    
+    @property
+    def get_known_map(self):
+        return self.known_map
+    
+    @property
+    def get_see_agent(self):
+        return self.spot_agent
+    
+    @property
+    def get_player_hiding(self):
+        return self.is_hiding

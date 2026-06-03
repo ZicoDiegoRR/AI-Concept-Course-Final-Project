@@ -23,7 +23,7 @@ class Agent:
         self.curr_state_id = 1
         
         self.walk_speed_mult = 1
-        self.patrol_speed_mult = 0.7
+        self.patrol_speed_mult = 0.5
         
         self.direction_collection = ["up", "down", "left", "right"]
         self.curr_view_id = random.choice(self.direction_collection)
@@ -38,10 +38,10 @@ class Agent:
         maze: list[list[dict[str, int]]],
     ) -> None:
         if not isinstance(maze, list):
-            return None
+            return
         
         if not isinstance(maze[0], list):
-            return None
+            return
 
         move = MOVEMENT[self.curr_view_id]
         widen_move = tuple(1 if item == 0 else 0 for item in move)
@@ -67,6 +67,7 @@ class Agent:
                 
                 if (itx, ity) == (x, y) or i == len(intersect_tile) - 1:
                     connected.append((itx, ity))
+                    continue
                 
                 nxt_x, nxt_y = intersect_tile[i+1]
                 dx_from_next = itx - nxt_x
@@ -117,10 +118,15 @@ class Agent:
         maze: list[list[dict[str, int]]],
         wall_reduction: float = 0.4,
         range_cell: int = 5,
+        hiding_cell_reduction: float = 0.6,
     ) -> None:
         if wall_reduction <= (1 - 0.25)/range_cell or wall_reduction > 1.:
-            print("WARN: The reduction wall value is invalid. Setting it to 0.4 (default) instead...")
-            wall_reduction = 0.4
+            print(f"WARN: The reduction wall value is invalid. Setting it to {(1 - 0.25)/range_cell} instead...")
+            wall_reduction = (1 - 0.25)/range_cell
+            
+        if hiding_cell_reduction <= (1 - 0.25)/range_cell or hiding_cell_reduction > 1.:
+            print(f"WARN: The reduction wall value is invalid. Setting it to {(1 - 0.25)/range_cell} instead...")
+            hiding_cell_reduction = (1 - 0.25)/range_cell
         
         px, py = player_pos
         q = deque([[1, (px, py)]])
@@ -138,23 +144,32 @@ class Agent:
             
             for key, val in maze[curr_x][curr_y].items():
                 prob_reduction = (1 - 0.25)/range_cell
-                if val == 1:
+                if val == 1 and key != "hiding":
                     prob_reduction = wall_reduction
-                    
-                (dx, dy) = MOVEMENT[key]
-                opposite_wall = OPPOSITE[key]
-                new_x, new_y = curr_x+dx, curr_y+dy
-                if not (0 <= new_x <= len(maze) - 1) or not (0 <= new_y <= len(maze[0]) - 1):
-                    continue
-                    
-                if maze[new_x][new_y][opposite_wall] == 1:
-                    prob_reduction = wall_reduction
+                
+                if key != "hiding":
+                    (dx, dy) = MOVEMENT[key]
+                    opposite_wall = OPPOSITE[key]
+                    new_x, new_y = curr_x+dx, curr_y+dy
+                    if not (0 <= new_x <= len(maze) - 1) or not (0 <= new_y <= len(maze[0]) - 1):
+                        continue
+                        
+                    if maze[new_x][new_y][opposite_wall] == 1:
+                        prob_reduction = wall_reduction
+                else:
+                    if val == 1:
+                        prob_reduction = hiding_cell_reduction
                     
                 if (new_x, new_y) not in visited:
                     q.append([curr_prob - prob_reduction, (new_x, new_y)])
                     
         for (row, col, prob) in res:
-            self.prob_map[row][col] = prob
+            if self.prob_map[row][col] > 0.25:
+                new_prob = (self.prob_map[row][col] + prob)/2
+            else:
+                new_prob = prob
+                
+            self.prob_map[row][col] = min(1., max(0.25, new_prob))
             
     def decay_prob(
         self,
@@ -169,12 +184,12 @@ class Agent:
         id: int = None,
         state: Literal["chase", "patrol", "suspicious"] = None,
     ) -> None:
-        if id is not None and isinstance(id, int) and 0 <= id <= 2:
+        if id is not None and isinstance(id, int) and 0 <= id <= len(self.state_collection) - 1:
             self.curr_state_id = id
             return
         
-        if state in self.state_collection:
-            self.curr_state_id = self.direction_collection.index(state)
+        if state != self.state_collection[self.curr_state_id] and state in self.state_collection:
+            self.curr_state_id = self.state_collection.index(state)
             return
         
     def update_direction(

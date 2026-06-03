@@ -110,6 +110,9 @@ def draw_maze(surface, maze, camera, rows, cols):
                 pygame.draw.line(surface, WALL_COLOR, (sx, sy), (sx, sy + cs), WALL_W)
             if cell.get("right", 0):
                 pygame.draw.line(surface, WALL_COLOR, (sx + cs, sy), (sx + cs, sy + cs), WALL_W)
+            if cell.get("hiding", 0) == 1:
+                bright_floor = tuple(min(255, int(c * 1.8)) for c in FLOOR_COLOR)
+                pygame.draw.rect(surface, bright_floor, floor_rect)
 
 def draw_hud(surface, algo, heuristic, rows, cols, wall_density, t):
     heur_str = f" / {heuristic}" if heuristic else ""

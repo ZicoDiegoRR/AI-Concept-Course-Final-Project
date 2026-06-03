@@ -19,24 +19,6 @@ OPPOSITE = {
     "right": "left",
 }
 
-def player_spotted(
-    player_pos: tuple[int, int], 
-    agent_vision: list[tuple[int, int]],
-) -> bool:
-    return player_pos in agent_vision
-
-def agent_heard(
-    noise_propagation: list[tuple[int, int]],
-    agent_pos: tuple[int, int],
-) -> bool:
-    return agent_pos in noise_propagation
-
-def agent_spotted(
-    player_vision: list[tuple[int, int]],
-    agent_pos: tuple[int, int]
-) -> bool:
-    return agent_pos in player_vision
-
 def bresenham(x0, y0, x1, y1):
     """
     Bresenham line algorithm code by encukou.
