@@ -10,6 +10,7 @@ def init_player(
     vision_range: int,
     row_size: int,
     col_size: int,
+    color: tuple[int, int, int,],
 ) -> None:
     global player_class
     
@@ -19,11 +20,14 @@ def init_player(
         vision_range=vision_range,
         row_size=row_size,
         col_size=col_size,
+        color=color,
     )
     
 def move_player(
     maze: list[list[dict[str, int]]],
     move: Literal["up", "down", "left", "right"],
+    wall_reduction: float,
+    range_cell: int,
 ) -> None:
     global player_class
     if player_class is None:
@@ -38,24 +42,41 @@ def move_player(
     
     opposite_wall = OPPOSITE[move]
     if maze[cx][cy][move] == 0 and maze[nx][ny][opposite_wall] == 0:
-        player_class.move_to(nx, ny)
+        player_class.move_to(maze=maze, new_row=nx, new_col=ny, range_cell=range_cell, wall_reduction=wall_reduction)
         if maze[nx][ny]["hiding"] == 1:
             player_class.toggle_hiding(True)
         else:
             player_class.toggle_hiding(False)
+            
+def vision_update(
+    agent_pos: tuple[int, int],
+) -> None:
+    global player_class
+    
+    player_see_agent = agent_spotted(
+        player_vision=player_class.get_curr_cell_view,
+        agent_pos=agent_pos
+    )
+    player_class.toggle_see_agent(player_see_agent)
             
 def run_player(
     maze: list[list[dict[str, int]]],
     move: Literal["up", "down", "left", "right", "none"],
     agent_pos: tuple[int, int],
     pressed_movement_toggle: bool,
+    wall_reduction: float,
+    range_noise_prop: int,
 ) -> None:
     global player_class
     if pressed_movement_toggle:
         player_class.toggle_movement()
         
     if move != "none":
-        move_player(maze=maze, move=move)
+        move_player(
+            maze=maze, move=move,
+            wall_reduction=wall_reduction,
+            range_cell=range_noise_prop,
+        )
         
     player_see_agent = agent_spotted(
         player_vision=player_class.get_curr_cell_view, 
@@ -74,6 +95,7 @@ def get_player_state() -> dict:
         "see_agent": player_class.get_see_agent,
         "hiding": player_class.get_player_hiding,
         "known_map": player_class.get_known_map,
-        "vision": player_class.get_curr_cell_view
+        "vision": player_class.get_curr_cell_view,
+        "player_noise": player_class.get_noise_list,
     }
     return state_dict

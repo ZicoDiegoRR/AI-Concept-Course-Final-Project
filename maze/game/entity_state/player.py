@@ -24,6 +24,7 @@ class Player:
         
         self.vision_range = vision_range
         self.known_map = [[False for _ in range(col_size)] for _ in range(row_size)]
+        self.noise_list = []
         self.curr_view_cell = []
     
     def cell_in_view(
@@ -119,17 +120,28 @@ class Player:
                 if (new_x, new_y) not in visited:
                     q.append([curr_noise - noise_reduction, (new_x, new_y)])
                     
-        return res
+        self.noise_list = res
         
     def move_to(
         self, 
         maze: list[list[dict[str, int]]],
+        wall_reduction: float,
+        range_cell: int,
         new_row: int,
         new_col: int,
     ) -> None:
         if new_row is not None and new_col is not None:
             self.curr_row = new_row
             self.curr_col = new_col
+            
+            if self.is_walking:
+                self.propagate_noise(
+                    maze=maze, 
+                    wall_reduction=wall_reduction, 
+                    range_cell=range_cell
+                )
+            else:
+                self.noise_list.clear()
             
             self.cell_in_view(maze)
 
@@ -174,3 +186,7 @@ class Player:
     @property
     def get_player_hiding(self):
         return self.is_hiding
+    
+    @property
+    def get_noise_list(self):
+        return self.noise_list

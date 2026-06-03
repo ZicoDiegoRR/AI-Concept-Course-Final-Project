@@ -1,0 +1,109 @@
+from ..entity_controller import player_control, agent_control
+from typing import Literal
+
+# Updatable values
+last_player_state = None
+last_agent_state = None
+player_hiding_timer = float("inf")
+
+# Non-updatable values (gameplay settings)
+prob_decay = None
+wall_reduction = None
+hiding_cell_reduction = None
+range_raise_prob = None
+maze = None
+
+def init_entities(
+    player_dict: dict,
+    agent_dict: dict,
+    game_dict: dict
+) -> None:
+    global wall_reduction, hiding_cell_reduction, range_raise_prob
+    global last_agent_state, last_player_state, prob_decay, maze
+    
+    row_size, col_size = game_dict["row_size"], game_dict["col_size"]
+    prob_decay = game_dict["prob_decay"]
+    wall_reduction = game_dict["wall_reduction"]
+    hiding_cell_reduction = game_dict["hiding_cell_reduction"]
+    range_raise_prob = game_dict["range_raise_prob"]
+    maze = game_dict["maze"]
+    
+    p_init_row = player_dict["init_row"]
+    p_init_col = player_dict["init_col"]
+    p_vision_range = player_dict["vision_range"]
+    p_color = player_dict["color"]
+    
+    a_init_row = agent_dict["init_row"]
+    a_init_col = agent_dict["init_col"]
+    a_vision_range = agent_dict["vision_range"]
+    a_h_func_init = agent_dict["h_func_init"]
+    a_max_mem = agent_dict["max_mem"]
+    a_color = agent_dict["color"]
+    
+    player_control.init_player(
+        init_row=p_init_row,
+        init_cols=p_init_col,
+        vision_range=p_vision_range,
+        row_size=row_size,
+        col_size=col_size,
+        color=p_color
+    )
+    
+    agent_control.init_agent(
+        init_row=a_init_row,
+        init_cols=a_init_col,
+        vision_range=a_vision_range,
+        row_size=row_size,
+        col_size=col_size,
+        h_func_init=a_h_func_init,
+        max_cell_mem=a_max_mem,
+        color=a_color
+    )
+    
+    last_agent_state = agent_control.get_agent_state()
+    last_player_state = player_control.get_player_state()
+    
+def run_entities(
+    player_move: Literal["up", "down", "left", "right", "none"],
+    pressed_movement_toggle: bool,
+) -> tuple[dict, dict]:
+    global player_hiding_timer, last_agent_state, last_player_state
+    
+    agent_pos = last_agent_state["curr_pos"]
+    player_control.run_player(
+        move=player_move, agent_pos=agent_pos, 
+        pressed_movement_toggle=pressed_movement_toggle,
+        wall_reduction=int(wall_reduction*range_raise_prob), 
+        range_noise_prop=range_raise_prob, maze=maze,
+    )
+    
+    hiding_timer_runs_out = False
+    curr_player_state = player_control.get_player_state()
+    if curr_player_state["hiding"]:
+        if player_hiding_timer == float("inf"):
+            player_hiding_timer = 60
+        else:
+            if player_hiding_timer <= 0:
+                hiding_timer_runs_out = True
+            else:
+                player_hiding_timer -= 1
+    else:
+        player_hiding_timer = float("inf")
+        
+    player_pos = curr_player_state["curr_pos"]
+    player_noise = curr_player_state["player_noise"]
+    agent_control.run_agent(
+        maze=maze, player_pos=player_pos, 
+        player_noise=player_noise, 
+        hiding_timer_run_out=hiding_timer_runs_out, 
+        wall_reduction=wall_reduction, 
+        hiding_cell_reduction=hiding_cell_reduction, 
+        range_raise_prob=range_raise_prob, prob_decay=prob_decay,
+    )
+    curr_agent_state = agent_control.get_agent_state()
+    
+    agent_pos = curr_agent_state["curr_pos"]
+    player_control.vision_update(agent_pos=agent_pos)
+    
+    last_agent_state, last_player_state = curr_agent_state, curr_player_state
+    return curr_agent_state, curr_player_state
