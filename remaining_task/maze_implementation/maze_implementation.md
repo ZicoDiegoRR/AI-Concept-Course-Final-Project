@@ -284,10 +284,10 @@ player_update = {
         "right",
         "none"
     ],
-
     "pressed_movement_toggle": bool,
-
-    "state": int
+    "state": int,
+    "player_moving": bool,
+    "agent_moving": bool,
 }
 ```
 
@@ -296,6 +296,14 @@ Keterangan:
 ```py
 3 -> gameplay berjalan
 0 -> kembali ke main menu
+
+player_moving = True -> player masih belum sampai ke cell tujuan (karena memerlukan beberapa tick untuk sampai)
+
+player_moving = False -> player sudah sampai ke cell tujuan
+
+agent_moving = True -> agent masih belum sampai ke cell tujuan (karena memerlukan beberapa tick untuk sampai)
+
+agent_moving = False -> agent sudah sampai ke cell tujuan
 ```
 
 ---
