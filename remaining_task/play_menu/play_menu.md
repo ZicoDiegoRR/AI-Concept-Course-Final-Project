@@ -1,4 +1,3 @@
-
 # STATUS: UNFINISHED
 
 # DESCRIPTION
@@ -68,8 +67,8 @@ Output dikirim kembali ke manager dan local looping dihentikan.
 
 Variabel yang menerima input numerik secara langsung:
 
-- row_size
-- col_size
+- row_size (nilai minimum 10)
+- col_size (nilai minimum 10)
 
 ## Agent Forgiveness
 
@@ -208,10 +207,10 @@ Pilihan:
 
 ## Agent's Memory Capacity
 
-- Low       : max_mem = 10
-- Medium    : max_mem = 20
-- High      : max_mem = 30
-- Very High : max_mem = 40
+- Low       : max_mem = 30
+- Medium    : max_mem = 50
+- High      : max_mem = 70
+- Very High : max_mem = 90
 
 # OUTPUT FORMAT
 
