@@ -6,8 +6,9 @@ from .play_menu import play_menu
 
 def main_menu():
     buttons = [
-        NeonButton(SCREEN_WIDTH // 2, 355, "> PLAY", NEON_CYAN, DIM_CYAN),
-        NeonButton(SCREEN_WIDTH // 2, 455, "> QUIT", NEON_PURPLE, (65, 0, 95)),
+        NeonButton(SCREEN_WIDTH // 2, 335, "> PLAY", NEON_CYAN, DIM_CYAN),
+        NeonButton(SCREEN_WIDTH // 2, 405, "> SETTINGS", NEON_GREEN, DIM_GREEN),
+        NeonButton(SCREEN_WIDTH // 2, 475, "> QUIT", NEON_PURPLE, (65, 0, 95)),
     ]
 
     t = 0.0
@@ -26,7 +27,9 @@ def main_menu():
                 if buttons[0].is_clicked(mouse_pos):
                     next_screen = "play"
                     running = False
-                elif buttons[1].is_clicked(mouse_pos):
+                if buttons[1].is_clicked(mouse_pos):
+                    print("Settings clicked!")
+                elif buttons[2].is_clicked(mouse_pos):
                     pygame.quit(); sys.exit()
 
         for btn in buttons:

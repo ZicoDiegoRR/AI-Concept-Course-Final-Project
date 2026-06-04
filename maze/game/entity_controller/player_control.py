@@ -10,7 +10,7 @@ def init_player(
     vision_range: int,
     row_size: int,
     col_size: int,
-    color: tuple[int, int, int,],
+    color: tuple[int, int, int,] = (0, 255, 0),
 ) -> None:
     global player_class
     

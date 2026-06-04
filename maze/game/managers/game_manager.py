@@ -1,4 +1,5 @@
 from ..entity_controller import player_control, agent_control
+from ..entity_spawning.spawn_handler import spawn_entities
 from typing import Literal
 
 # Updatable values
@@ -21,20 +22,19 @@ def init_entities(
     global wall_reduction, hiding_cell_reduction, range_raise_prob
     global last_agent_state, last_player_state, prob_decay, maze
     
-    row_size, col_size = game_dict["row_size"], game_dict["col_size"]
+    maze = game_dict["maze"]
+    row_size, col_size = len(maze), len(maze[0])
+    
     prob_decay = game_dict["prob_decay"]
     wall_reduction = game_dict["wall_reduction"]
     hiding_cell_reduction = game_dict["hiding_cell_reduction"]
     range_raise_prob = game_dict["range_raise_prob"]
-    maze = game_dict["maze"]
     
-    p_init_row = player_dict["init_row"]
-    p_init_col = player_dict["init_col"]
+    (p_init_row, p_init_col), (a_init_row, a_init_col) = spawn_entities(maze=maze)
+    
     p_vision_range = player_dict["vision_range"]
     p_color = player_dict["color"]
-    
-    a_init_row = agent_dict["init_row"]
-    a_init_col = agent_dict["init_col"]
+
     a_vision_range = agent_dict["vision_range"]
     a_h_func_init = agent_dict["h_func_init"]
     a_max_mem = agent_dict["max_mem"]
