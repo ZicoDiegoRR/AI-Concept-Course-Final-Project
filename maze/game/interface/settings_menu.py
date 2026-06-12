@@ -153,7 +153,7 @@ def settings_menu(init_state=None, start_t=0.0):
                 and event.button == 1
             ):
 
-                if back_btn.is_clicked(mouse_pos):
+                if back_btn.is_clicked(mouse_pos) and not heuristic_dd.open:
 
                     def clamp(v):
                         if v is None:
@@ -332,7 +332,8 @@ def settings_menu(init_state=None, start_t=0.0):
 
         heuristic_dd.draw(screen)
 
-        back_btn.draw(screen)
+        if not heuristic_dd.open:
+            back_btn.draw(screen)
 
         screen.blit(SCANLINE_SURF, (0, 0))
 
