@@ -2,7 +2,7 @@ import pygame
 import sys
 import math
 from .backbone import *
-from .play_menu import play_menu
+from ..play_menu import play_menu
 
 def main_menu():
     buttons = [
@@ -13,7 +13,7 @@ def main_menu():
 
     t = 0.0
     running = True
-    next_screen = None
+    next_state = None
 
     while running:
         dt = clock.tick(FPS) / 1000.0
@@ -25,10 +25,11 @@ def main_menu():
                 pygame.quit(); sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if buttons[0].is_clicked(mouse_pos):
-                    next_screen = "play"
+                    next_state = 1
                     running = False
                 if buttons[1].is_clicked(mouse_pos):
-                    print("Settings clicked!")
+                    next_state = 2
+                    running = False
                 elif buttons[2].is_clicked(mouse_pos):
                     pygame.quit(); sys.exit()
 
@@ -67,8 +68,7 @@ def main_menu():
         screen.blit(SCANLINE_SURF, (0, 0))
         pygame.display.flip()
 
-    if next_screen == "play":
-        play_menu(t)
+    return {"next_state": next_state}
 
 if __name__ == "__main__":
     main_menu()

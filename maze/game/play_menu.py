@@ -1,6 +1,6 @@
 import pygame
 import sys
-from .backbone import *
+from .interface.backbone import *
 from .gameplay import game_screen
 from ..generation.generate_all import generate
 
@@ -142,5 +142,5 @@ def play_menu(start_t=0.0):
 
     if go_back:
         # Local import prevents circular dependency!
-        from .main_menu import main_menu
+        from .interface.main_menu import main_menu
         main_menu()

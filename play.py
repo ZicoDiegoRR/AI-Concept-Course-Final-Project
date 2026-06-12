@@ -1,3 +1,3 @@
-from maze.game import main_menu
+from maze.game.managers import loop_manager
 
-main_menu.main_menu()
+loop_manager.play_hns()

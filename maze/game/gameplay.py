@@ -1,7 +1,7 @@
 import pygame
 import sys
 import math
-from .backbone import *
+from .interface.backbone import *
 
 CELL_SIZE   = 48          
 WALL_W      = 3           
@@ -283,5 +283,5 @@ def game_screen(maze, rows, cols, algo, heuristic, wall_density, start_pos, goal
         pygame.display.flip()
 
     # Local import prevents circular dependency!
-    from .main_menu import main_menu
+    from .interface.main_menu import main_menu
     main_menu()
