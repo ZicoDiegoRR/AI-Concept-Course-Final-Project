@@ -277,7 +277,7 @@ def settings_menu(init_state=None, start_t=0.0):
         player_lbl = font_sub.render(
             "PLAYER COLOR",
             True,
-            NEON_GREEN
+            NEON_CYAN
         )
 
         screen.blit(
@@ -288,7 +288,7 @@ def settings_menu(init_state=None, start_t=0.0):
         agent_lbl = font_sub.render(
             "AGENT COLOR",
             True,
-            NEON_PINK
+            NEON_CYAN
         )
 
         screen.blit(

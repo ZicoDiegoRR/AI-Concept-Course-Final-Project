@@ -2,7 +2,6 @@ import pygame
 import sys
 import math
 from .backbone import *
-from ..play_menu import play_menu
 
 def main_menu():
     buttons = [
@@ -31,7 +30,8 @@ def main_menu():
                     next_state = 2
                     running = False
                 elif buttons[2].is_clicked(mouse_pos):
-                    pygame.quit(); sys.exit()
+                    next_state = -1
+                    running = False
 
         for btn in buttons:
             btn.update(mouse_pos, dt)

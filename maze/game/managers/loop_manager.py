@@ -70,3 +70,6 @@ def play_hns():
             running = False
             print("Not implemented")
             # TODO
+            
+        if ui_state_id == -1:
+            running = False
