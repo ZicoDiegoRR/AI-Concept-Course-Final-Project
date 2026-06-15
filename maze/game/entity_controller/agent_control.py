@@ -2,6 +2,7 @@ from ..entity_state.agent import Agent
 from ...algorithm import a_star, bfs
 from .shared_control import *
 from collections import deque
+from typing import Callable
 import heapq
 
 agent_class = None
@@ -14,7 +15,7 @@ def init_agent(
     vision_range: int, 
     row_size: int,
     col_size: int,
-    h_func_init: function,
+    h_func_init: Callable,
     max_cell_mem: int,
     color: tuple[int, int, int] = (255, 0, 0),
 ) -> None:

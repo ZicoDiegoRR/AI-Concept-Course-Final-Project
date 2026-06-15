@@ -1,10 +1,11 @@
 import heapq
+from typing import Callable
 
 def solve(
     grid: list[list[dict[str, int]]],
     start: tuple[int, int],
     goal: tuple[int, int],
-    h_func: function,
+    h_func: Callable,
     max_steps: int = 500,
 ) -> list[tuple[int, int]]:
     if not grid or not grid[0]:
