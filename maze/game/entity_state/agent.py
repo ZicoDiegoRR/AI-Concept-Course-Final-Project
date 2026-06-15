@@ -26,7 +26,7 @@ class Agent:
         self.patrol_speed_mult = 0.5
         
         self.direction_collection = ["up", "down", "left", "right"]
-        self.curr_view_id = random.choice(self.direction_collection)
+        self.curr_view_id = random.randrange(len(self.direction_collection))
         self.curr_view_cell = []
         
         self.prob_map = [[0.25 for _ in range(col_size)] for _ in range(row_size)]
@@ -36,81 +36,77 @@ class Agent:
     def cell_in_view(
         self,
         maze: list[list[dict[str, int]]],
-    ) -> None:
-        if not isinstance(maze, list):
-            return
-        
-        if not isinstance(maze[0], list):
+    ) -> None: # Code corrected by Copilot AI
+        if not isinstance(maze, list) or not maze or not isinstance(maze[0], list):
             return
 
-        move = MOVEMENT[self.curr_view_id]
-        widen_move = tuple(1 if item == 0 else 0 for item in move)
-        
+        rows = len(maze)
+        cols = len(maze[0])
         x, y = self.curr_row, self.curr_col
-        dx, dy = widen_move
-            
-        widen_area_tile = []
-        for i in range(-self.vision_range+1, self.vision_range):            
-            new_x = x + self.vision_range + (dx * i) if dx == 1 else x + self.vision_range
-            new_y = y + self.vision_range + (dy * i) if dy == 1 else y + self.vision_range
-            
-            widen_area_tile.append((new_x, new_y))
-            
-        res = []
-        for (wx, wy) in widen_area_tile:
-            intersect_tile = list(bresenham(x, y, wx, wy))[::-1]
-            connected = []
-            
-            for i, (itx, ity) in enumerate(intersect_tile):
-                if not (0 <= itx < len(maze)) or not (0 <= ity < len(maze[0])):
-                    continue
-                
-                if (itx, ity) == (x, y) or i == len(intersect_tile) - 1:
+        direction = self.direction_collection[self.curr_view_id]
+        dx, dy = MOVEMENT[direction]
+        perp_dx, perp_dy = -dy, dx
+
+        def in_bounds(ix: int, iy: int) -> bool:
+            return 0 <= ix < rows and 0 <= iy < cols
+
+        def can_traverse(from_x: int, from_y: int, to_x: int, to_y: int) -> bool:
+            if not in_bounds(from_x, from_y) or not in_bounds(to_x, to_y):
+                return False
+
+            delta = (to_x - from_x, to_y - from_y)
+            if delta == (0, 0):
+                return True
+
+            if abs(delta[0]) <= 1 and abs(delta[1]) <= 1:
+                if abs(delta[0]) + abs(delta[1]) == 1:
+                    wall = MOVEMENT_REV[delta]
+                    if wall is None:
+                        return False
+
+                    return (
+                        maze[from_x][from_y].get(wall, 1) == 0
+                        and maze[to_x][to_y].get(OPPOSITE[wall], 1) == 0
+                    )
+
+                # diagonal step: require both adjacent cardinal transitions through the corner,
+                # including the entry edges on the target diagonal cell.
+                orth1 = (from_x + delta[0], from_y)
+                orth2 = (from_x, from_y + delta[1])
+                return (
+                    can_traverse(from_x, from_y, orth1[0], orth1[1])
+                    and can_traverse(from_x, from_y, orth2[0], orth2[1])
+                    and can_traverse(orth1[0], orth1[1], to_x, to_y)
+                    and can_traverse(orth2[0], orth2[1], to_x, to_y)
+                )
+
+            return False
+
+        res: list[tuple[int, int]] = []
+        for offset in range(-self.vision_range + 1, self.vision_range):
+            target_x = x + dx * self.vision_range + perp_dx * offset
+            target_y = y + dy * self.vision_range + perp_dy * offset
+            ray = list(bresenham(x, y, target_x, target_y))
+
+            connected: list[tuple[int, int]] = []
+            for idx, (itx, ity) in enumerate(ray):
+                if not in_bounds(itx, ity):
+                    break
+
+                if idx == 0:
                     connected.append((itx, ity))
                     continue
-                
-                nxt_x, nxt_y = intersect_tile[i+1]
-                dx_from_next = itx - nxt_x
-                dy_from_next = ity - nxt_y
-                which_changed = (dx_from_next, dy_from_next)
-                
-                wall_to_check = []
-                if which_changed[0] == 1:
-                    wall_to_check.append("up")
-                elif which_changed[0] == -1:
-                    wall_to_check.append("down")
-                    
-                if which_changed[1] == 1:
-                    wall_to_check.append("left")
-                elif which_changed[1] == -1:
-                    wall_to_check.append("right")
-                    
-                no_wall = True
-                for wall in wall_to_check:
-                    opposite_wall = OPPOSITE[wall]
-                    neighx, neighy = MOVEMENT[opposite_wall]
-                    newx, newy = itx+neighx, ity+neighy
-                    
-                    wall_move = MOVEMENT[wall]
-                    nxt_neighx, nxt_neighy = nxt_x+wall_move[0], nxt_y+wall_move[1]
-                    if (
-                        (maze[itx][ity][wall] == 1) 
-                        or (maze[newx][newy][opposite_wall] == 1)
-                        or (maze[nxt_x][nxt_y][opposite_wall] == 1)
-                        or (maze[nxt_neighx][nxt_neighy][wall] == 1)
-                    ):
-                        no_wall = False
-                        connected.clear()
-                        break
-                        
-                if no_wall:
-                    connected.append((itx, ity))
-                        
+
+                prev_x, prev_y = ray[idx - 1]
+                if not can_traverse(prev_x, prev_y, itx, ity):
+                    break
+
+                connected.append((itx, ity))
+
             if connected:
                 res.extend(connected)
-                    
-        res_final = list(set(res))
-        self.curr_view_cell = res_final
+
+        self.curr_view_cell = list(dict.fromkeys(res))
     
     def raise_prob(
         self,
@@ -120,23 +116,22 @@ class Agent:
         range_cell: int = 5,
         hiding_cell_reduction: float = 0.6,
     ) -> None:
-        if wall_reduction <= (1 - 0.25)/range_cell or wall_reduction > 1.:
-            print(f"WARN: The reduction wall value is invalid. Setting it to {(1 - 0.25)/range_cell} instead...")
+        wall_reduction = min(1., wall_reduction)
+        if wall_reduction < (1 - 0.25)/range_cell:
             wall_reduction = (1 - 0.25)/range_cell
             
-        if hiding_cell_reduction <= (1 - 0.25)/range_cell or hiding_cell_reduction > 1.:
-            print(f"WARN: The reduction wall value is invalid. Setting it to {(1 - 0.25)/range_cell} instead...")
-            hiding_cell_reduction = (1 - 0.25)/range_cell
+        hiding_cell_reduction = min(1., max(hiding_cell_reduction, 0.))
         
         px, py = player_pos
-        q = deque([[1, (px, py)]])
+        q = deque([[1., (px, py)]])
         visited = set()
         res = []
         
         while q:
             curr_prob, (curr_x, curr_y) = q.popleft()
             
-            if curr_prob <= 0.25 or (curr_x, curr_y) in visited:
+            if (curr_prob <= 0.25 or (curr_x, curr_y) in visited
+                or not (0 <= curr_x < len(maze)) or not (0 <= curr_y < len(maze[0]))):
                 continue
             
             visited.add((curr_x, curr_y))
@@ -154,7 +149,7 @@ class Agent:
                     if not (0 <= new_x <= len(maze) - 1) or not (0 <= new_y <= len(maze[0]) - 1):
                         continue
                         
-                    if maze[new_x][new_y][opposite_wall] == 1:
+                    if maze[new_x][new_y][opposite_wall] == 1 or maze[curr_x][curr_y][key] == 1:
                         prob_reduction = wall_reduction
                 else:
                     if val == 1:
@@ -213,21 +208,22 @@ class Agent:
     ) -> None:
         if new_row is not None and new_col is not None:
             move_direction_change = (new_row - self.curr_row, new_col - self.curr_col)
-            move_direction = MOVEMENT_REV[move_direction_change]
+            move_direction = MOVEMENT_REV.get(move_direction_change, None)
             
-            self.curr_row = new_row
-            self.curr_col = new_col
-            self.update_direction(direction=move_direction)
-            self.cell_in_view(maze=maze)
-            
-            for (pos_x, pos_y) in self.curr_view_cell:
-                self.prob_map[pos_x][pos_y] = 0.25
-                if (pos_x, pos_y) not in self.checked_list:
-                    self.checked_list.append((pos_x, pos_y))
-            
-            if len(self.checked_list) > self.max_mem:
-                skip_id = len(self.checked_list) - self.max_mem
-                self.checked_list = self.checked_list[skip_id:]
+            if move_direction:
+                self.curr_row = new_row
+                self.curr_col = new_col
+                self.update_direction(direction=move_direction)
+                self.cell_in_view(maze=maze)
+                
+                for (pos_x, pos_y) in self.curr_view_cell:
+                    self.prob_map[pos_x][pos_y] = 0.25
+                    if (pos_x, pos_y) not in self.checked_list:
+                        self.checked_list.append((pos_x, pos_y))
+                
+                if len(self.checked_list) > self.max_mem:
+                    skip_id = len(self.checked_list) - self.max_mem
+                    self.checked_list = self.checked_list[skip_id:]
     
     @property
     def get_speed(self) -> Union[int, float]:

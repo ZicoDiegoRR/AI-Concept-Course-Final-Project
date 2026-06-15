@@ -14,7 +14,7 @@ Does NOT contain: pathfinding, AI logic, collision, timer update,
 
 import pygame
 import math
-from backbone_data import (
+from .backbone import (
     screen, clock, FPS,
     SCREEN_WIDTH, SCREEN_HEIGHT,
     NEON_CYAN, NEON_PINK, NEON_PURPLE, NEON_GREEN,
@@ -41,8 +41,6 @@ AGENT_VISION_COLOR  = (255, 0, 180, 25)   # RGBA — dim pink, more transparent
 
 GLOW_RADIUS_FACTOR  = 0.55   # glow size relative to cell size
 ENTITY_RADIUS_FACTOR = 0.30  # entity circle size relative to cell size
-
-HIDING_VISION_LIMIT = 1      # max vision radius when player is inside hiding spot
 
 
 # ── Camera ───────────────────────────────────────────────────────────────────
@@ -104,15 +102,17 @@ class MazeRenderer:
         self._agent_moving = False
         self._agent_progress = 0.0
 
+        self._tick_interval = 0.5
+
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def update(self, game_dict: dict) -> dict:
+    def update(self, game_dict: dict, dt: float) -> dict:
         """
         Main entry point called every tick by Manager.
         Renders everything and returns player_update.
         """
-        dt = clock.tick(FPS) / 1000.0
-        self._t += dt
+        frame_dt = min(dt, 0.25)
+        self._t += frame_dt
 
         maze         = game_dict["maze"]
         timer        = game_dict["timer"]
@@ -124,13 +124,21 @@ class MazeRenderer:
         agent_speed  = game_dict["agent_speed"]
         agent_vision = game_dict["agent_vision"]
         agent_color  = game_dict["agent_color"]
+        
+        # ── Win/Lose check ────────────────────────────────────────────────────
+        game_status = "running"
+        if player_pos == agent_pos:
+            game_status = "lose"
+        elif timer <= 0:
+            game_status = "win"
 
         # ── Interpolation update ──────────────────────────────────────────────
+        interp_step = frame_dt / self._tick_interval if self._tick_interval > 0 else 1.0
         self._player_moving = self._update_interpolation(
-            "player", player_pos, player_speed
+            "player", player_pos, player_speed * interp_step
         )
         self._agent_moving = self._update_interpolation(
-            "agent", agent_pos, agent_speed
+            "agent", agent_pos, agent_speed * interp_step
         )
 
         # ── Camera follows visual player position ─────────────────────────────
@@ -139,17 +147,12 @@ class MazeRenderer:
             self._player_visual_pos[1]
         )
 
-        # ── Check if player is in hiding spot ────────────────────────────────
-        pr, pc = player_pos
-        player_in_hiding = maze[pr][pc]["hiding"] == 1
-
         # ── Render pipeline ───────────────────────────────────────────────────
         self._render_background()
         self._render_vision(agent_vision,  AGENT_VISION_COLOR)
         self._render_vision(
-            player_vision if not player_in_hiding
-            else self._limited_vision(player_pos, maze),
-            PLAYER_VISION_COLOR
+            player_vision,
+            PLAYER_VISION_COLOR,
         )
         self._render_maze(maze)
         self._render_hiding_spots(maze, player_pos)
@@ -166,12 +169,24 @@ class MazeRenderer:
         pygame.display.flip()
 
         # ── Read input ────────────────────────────────────────────────────────
-        raw_input = self._read_input()
+        if not self._player_moving:
+            raw_input = self._read_input()
+            move = raw_input["move"]
+            toggle_movement = raw_input["pressed_movement_toggle"]
+        else:
+            move = "none"
+            toggle_movement = False
+        
+        # ── Render win/lose screen (if true) ──────────────────────────────────
+        next_state = 3 if game_status == "running" else 0
+        if game_status != "running":
+            next_state = 0
+            show_end_screen(status=game_status)
 
         return {
-            "move":                    raw_input["move"],
-            "pressed_movement_toggle": raw_input["pressed_movement_toggle"],
-            "state":                   raw_input["state"],
+            "move":                    move,
+            "pressed_movement_toggle": toggle_movement,
+            "state":                   next_state,
             "player_moving":           self._player_moving,
             "agent_moving":            self._agent_moving,
         }
@@ -236,21 +251,6 @@ class MazeRenderer:
             self._agent_prev_pos = current_pos if progress >= 1.0 else prev
 
         return progress < 1.0
-
-    def _limited_vision(
-        self, player_pos: tuple[int, int], maze: list
-    ) -> list[tuple[int, int]]:
-        """Return a tiny vision list when player is inside a hiding spot."""
-        r, c = player_pos
-        rows = len(maze)
-        cols = len(maze[0])
-        cells = []
-        for dr in range(-HIDING_VISION_LIMIT, HIDING_VISION_LIMIT + 1):
-            for dc in range(-HIDING_VISION_LIMIT, HIDING_VISION_LIMIT + 1):
-                nr, nc = r + dr, c + dc
-                if 0 <= nr < rows and 0 <= nc < cols:
-                    cells.append((nr, nc))
-        return cells
 
     # ── Render: Background ────────────────────────────────────────────────────
 
@@ -430,18 +430,18 @@ class MazeRenderer:
         radius = int(CELL_SIZE * ENTITY_RADIUS_FACTOR)
         glow_r = int(CELL_SIZE * GLOW_RADIUS_FACTOR)
 
-        # Outer glow
-        glow_surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-        pygame.draw.circle(glow_surf, (*color, 35), (cx, cy), glow_r)
-        pygame.draw.circle(glow_surf, (*color, 55), (cx, cy), glow_r // 2)
-        screen.blit(glow_surf, (0, 0))
+        # # Outer glow
+        # glow_surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        # pygame.draw.circle(glow_surf, (*color, 35), (cx, cy), glow_r)
+        # pygame.draw.circle(glow_surf, (*color, 55), (cx, cy), glow_r // 2)
+        # screen.blit(glow_surf, (0, 0))
 
         # Core circle
         pygame.draw.circle(screen, color, (cx, cy), radius)
 
-        # Bright center highlight
-        bright = tuple(min(255, int(c * 0.2 + 255 * 0.8)) for c in color)
-        pygame.draw.circle(screen, bright, (cx - radius // 4, cy - radius // 4), radius // 3)
+        # # Bright center highlight
+        # bright = tuple(min(255, int(c * 0.2 + 255 * 0.8)) for c in color)
+        # pygame.draw.circle(screen, bright, (cx - radius // 4, cy - radius // 4), radius // 3)
 
     # ── Render: HUD ───────────────────────────────────────────────────────────
 

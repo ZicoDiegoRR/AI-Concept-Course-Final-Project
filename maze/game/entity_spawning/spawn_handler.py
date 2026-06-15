@@ -50,8 +50,8 @@ def spawn_entities(
             y_lower = half_col+1
             y_upper = cols - 1
             
-        x_spawn = random.randint(x_lower, x_upper)
-        y_spawn = random.randint(y_lower, y_upper)
+        x_spawn = random.randint(min(x_lower, x_upper), max(x_lower, x_upper))
+        y_spawn = random.randint(min(y_lower, y_upper), max(y_lower, y_upper))
         spawn_loc.append((x_spawn, y_spawn))
         
     return spawn_loc
