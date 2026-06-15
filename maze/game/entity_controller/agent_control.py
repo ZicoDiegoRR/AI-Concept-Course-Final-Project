@@ -16,7 +16,7 @@ def init_agent(
     vision_range: int, 
     row_size: int,
     col_size: int,
-    h_func_init: callable,
+    h_func_init: Callable,
     max_cell_mem: int,
     color: tuple[int, int, int] = (255, 0, 0),
 ) -> None:
