@@ -11,9 +11,6 @@ def generate(
     
     connected_maze = perform_connection(init_maze)
     
-    start = (0, 0)
-    goal = (rows-1, cols-1)
-    
     final_maze = add_hiding_spot(grid=connected_maze, hiding_prob=hiding_prob)
     
-    return start, goal, final_maze
+    return final_maze

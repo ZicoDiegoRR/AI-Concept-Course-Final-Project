@@ -53,7 +53,10 @@ class Player:
             res.append((curr_x, curr_y))
             for key, val in maze[curr_x][curr_y].items():
                 if val == 0:
-                    (dx, dy) = movement[key]
+                    (dx, dy) = movement.get(key, (None, None))
+                    if not dx and not dy:
+                        continue
+                    
                     opposite_wall = opposite[key]
                     new_x, new_y = curr_x+dx, curr_y+dy
                     if not 0 <= new_x <= len(maze) - 1 or not 0 <= new_y <= len(maze[0]) - 1:
@@ -108,7 +111,10 @@ class Player:
                 if val == 1:
                     noise_reduction = wall_reduction
                     
-                (dx, dy) = movement[key]
+                (dx, dy) = movement.get(key, (None, None))
+                if not dx and not dy:
+                    continue
+                
                 opposite_wall = opposite[key]
                 new_x, new_y = curr_x+dx, curr_y+dy
                 if not (0 <= new_x <= len(maze) - 1) or not (0 <= new_y <= len(maze[0]) - 1):
@@ -159,6 +165,9 @@ class Player:
         see: bool
     ) -> None:
         self.spot_agent = see
+        
+    def reset_noise(self) -> None:
+        self.noise_list.clear()
         
     @property
     def get_speed(self) -> float:

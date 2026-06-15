@@ -1,10 +1,17 @@
-from .game_manager import init_entities, run_entities
 from ...generation.generate_all import generate
+from ..interface.backbone import clock, FPS
+from .game_manager import *
 from .ui_manager import *
+
+"""Main loop manager for Hide & Seek.
+
+This module implements UI state transitions, game initialization, and the
+main gameplay loop that drives rendering and entity updates.
+"""
 
 UI_STATE = ["main_menu", "play_menu", "settings_menu", "gameplay"] 
 ui_state_id = 0
-timer = None
+initiated_maze = False
 
 game_dict = {
     "prob_decay": None,
@@ -17,6 +24,8 @@ game_dict = {
 maze_dict = {
     "rows": None,
     "cols": None,
+    "wall_prob": None,
+    "hiding_prob": 0.25,
 }
 
 player_dict = {
@@ -32,13 +41,40 @@ agent_dict = {
 }
 
 def play_hns():
-    global ui_state_id, player_dict, agent_dict, game_dict, maze_dict
+    """Run the Hide & Seek game loop.
+
+    The loop handles UI flow, maze generation, entity state initialization,
+    rendering, and throttled gameplay updates.
+    """
+    global ui_state_id, player_dict, agent_dict, game_dict, maze_dict, initiated_maze
+    curr_game_state = {
+        "maze": None,
+        "timer": None,
+        "player_pos": None,
+        "player_speed": None,
+        "player_vision": None,
+        "player_color": None,
+        "agent_pos": None,
+        "agent_speed": None,
+        "agent_vision": None,
+        "agent_color": None,
+    }
     
+    # AI-generated: throttle gameplay ticks to a fixed interval
+    tick_interval = 0.125
+    tick_accumulator = 0.0
+    frame_dt_accumulate = 0.0
+    
+    pending_move = "none"
+    pending_toggle = False
+
     running = True
     while running:
         if ui_state_id == 0:
-            state_dict = render_main_menu()
+            initiated_maze = False
+            reset_game()
             
+            state_dict = render_main_menu()
             next_state = state_dict["next_state"]
             ui_state_id = next_state
             
@@ -63,6 +99,8 @@ def play_hns():
                 
                 maze_dict["rows"] = game_rule["row_size"]
                 maze_dict["cols"] = game_rule["col_size"]
+                maze_dict["wall_prob"] = game_rule["wall_prob"]
+                timer = game_rule["timer"]
                 
                 print("\nSet gamerules:")
                 for dict_item in [game_dict, agent_dict, player_dict, maze_dict]:
@@ -99,9 +137,69 @@ def play_hns():
             print("- Agent heuristic function:", agent_dict["h_func_init"])
             
         if ui_state_id == 3:
-            running = False
-            print("Not implemented")
-            # TODO
+            if not game_dict["maze"] or not initiated_maze:
+                game_dict["maze"] = generate(
+                    rows=maze_dict["rows"],
+                    cols=maze_dict["cols"],
+                    wall_prob=maze_dict["wall_prob"],
+                    hiding_prob=maze_dict["hiding_prob"]
+                )
+                
+                initiated_maze = True
+
+            init_entities(
+                player_dict=player_dict,
+                agent_dict=agent_dict,
+                game_dict=game_dict,
+            )
+            
+            curr_player_state, curr_agent_state = get_entity_states()
+
+            curr_game_state["maze"] = game_dict["maze"]
+            curr_game_state["player_pos"] = curr_player_state["curr_pos"]
+            curr_game_state["player_speed"] = curr_player_state["speed"]
+            curr_game_state["player_vision"] = curr_player_state["vision"]
+            curr_game_state["player_color"] = player_dict["color"]
+            curr_game_state["agent_pos"] = curr_agent_state["curr_pos"]
+            curr_game_state["agent_speed"] = curr_agent_state["speed"]
+            curr_game_state["agent_vision"] = curr_agent_state["vision"]
+            curr_game_state["agent_color"] = agent_dict["color"]
+            curr_game_state["timer"] = timer
+            
+            # AI-generated: frame accumulation to determine one second
+            frame_per_second = clock.tick(FPS)
+            frame_dt = frame_per_second / 1000.0
+            tick_accumulator += frame_dt
+            frame_dt_accumulate += frame_dt
+
+            # AI-generated: decrement the timer once per full second
+            if frame_dt_accumulate >= 1.0:
+                seconds = int(frame_dt_accumulate)
+                frame_dt_accumulate -= seconds
+                timer = max(0, timer - seconds)
+
+            state_dict = render_gameplay(
+                game_dict=curr_game_state,
+                dt=frame_dt,
+            )
+            
+            if state_dict["move"] != "none":
+                pending_move = state_dict["move"]
+            if state_dict["pressed_movement_toggle"]:
+                pending_toggle = True
+
+            ui_state_id = state_dict["state"]
+            
+            # AI-assisted: interpolate the entity movement based on tick
+            if tick_accumulator >= tick_interval:
+                tick_accumulator -= tick_interval
+                run_entities(
+                    player_move=pending_move,
+                    pressed_movement_toggle=pending_toggle,
+                    agent_still_moving=state_dict["agent_moving"]
+                )
+                pending_move = "none"
+                pending_toggle = False
             
         if ui_state_id == -1:
             running = False

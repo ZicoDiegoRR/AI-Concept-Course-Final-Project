@@ -58,6 +58,11 @@ def vision_update(
         agent_pos=agent_pos
     )
     player_class.toggle_see_agent(player_see_agent)
+    
+def reset_noise() -> None:
+    global player_class
+    
+    player_class.reset_noise()
             
 def run_player(
     maze: list[list[dict[str, int]]],

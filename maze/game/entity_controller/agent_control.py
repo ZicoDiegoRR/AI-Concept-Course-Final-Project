@@ -1,3 +1,4 @@
+from ...algorithm.heuristics import euclidean, manhattan
 from ..entity_state.agent import Agent
 from ...algorithm import a_star, bfs
 from .shared_control import *
@@ -21,7 +22,7 @@ def init_agent(
 ) -> None:
     global agent_class, h_func
     
-    h_func = h_func_init
+    h_func = euclidean.compute if h_func_init == "Euclidean" else manhattan.compute
     agent_class = Agent(
         init_row=init_row,
         init_cols=init_cols,
@@ -52,8 +53,6 @@ def suspicious_find(
     if agent_class is None or agent_class.get_state != "suspicious":
         return
     
-    curr_agent_path.clear()
-    
     curr_pos = agent_class.get_pos
     prob_map = agent_class.get_prob_map
     
@@ -77,6 +76,7 @@ def suspicious_find(
 def chase_find(
     maze: list[list[dict[str, int]]],
     player_pos: tuple[int, int],
+    exclude_start: bool,
 ) -> None:
     global agent_class, curr_agent_path, h_func
     if agent_class is None or agent_class.get_state != "chase":
@@ -87,7 +87,7 @@ def chase_find(
         grid=maze, start=curr_pos, 
         goal=player_pos, h_func=h_func
     )
-    curr_agent_path = deque(path_to_target)
+    curr_agent_path = deque(path_to_target[1 if exclude_start else 0:])
     
 def move_agent(
     maze: list[list[dict[str, int]]],
@@ -121,16 +121,20 @@ def run_agent(
         player_spotted(player_pos, agent_class.get_curr_cell_in_view)
         or hiding_timer_run_out
     )
+    agent_notice_player_disappear = agent_notice_player_before_disappear(
+        player_pos, agent_class.get_curr_cell_in_view, maze
+    )
     
     # Sees player or in "chase" mode and either noticing player before disappearing or still trying to chase
     if agent_spot_player or (
         agent_class.get_state == "chase" and (
             curr_agent_path 
-            or agent_notice_player_before_disappear(player_pos, agent_class.get_curr_cell_in_view, maze)
+            or agent_notice_player_disappear
         )
     ):
         agent_class.update_state(state="chase")
-        chase_find(maze=maze, player_pos=player_pos)
+        if agent_spot_player or agent_notice_player_disappear:
+            chase_find(maze=maze, player_pos=player_pos, exclude_start=True)
         move_agent(maze=maze)
         return
     
@@ -142,6 +146,7 @@ def run_agent(
             grid=maze, start=agent_class.get_pos, 
             goal=player_pos, h_func=h_func
         )
+        possible_path = possible_path[:len(possible_path)]
         for pos in possible_path:
             agent_class.raise_prob(
                 player_pos=pos, 
@@ -156,7 +161,7 @@ def run_agent(
     # Get suspicious check        
     agent_heard_player = agent_heard(player_noise, curr_pos)
     raised_prob_map = agent_raised_prob(agent_class.get_prob_map)
-    
+
     # Hears something or in "suspicious" mode 
     if agent_heard_player or agent_class.get_state == "suspicious" or raised_prob_map:
         agent_class.update_state(state="suspicious")
@@ -190,6 +195,7 @@ def run_agent(
         move_agent(maze=maze)
     else:
         patrol_find(maze=maze)
+        
     return
 
 def get_agent_state() -> dict:
@@ -201,5 +207,6 @@ def get_agent_state() -> dict:
         "behavior": agent_class.get_state,
         "speed": agent_class.get_speed,
         "vision": agent_class.get_curr_cell_in_view,
+        "prob_map": agent_class.get_prob_map,
     }
     return state_dict

@@ -1,5 +1,4 @@
 import pygame
-import sys
 import math
 
 pygame.init()
@@ -109,7 +108,7 @@ for _r in range(440, 0, -10):
 
 def draw_background(surface, t):
     surface.fill((2, 4, 8))
-    draw_grid(surface=surface, t=t)
+    # draw_grid(surface=surface, t=t)
     surface.blit(VIGNETTE_SURF, (0, 0))
     draw_corner_decorations(surface, t)
 

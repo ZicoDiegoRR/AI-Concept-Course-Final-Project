@@ -21,22 +21,30 @@ def play_menu(start_t=0.0):
     # Baris 1: Grid (Kiri) & Amnesti AI (Kanan)
     rows_input = IntInputBox(COL1_X, Y_START, HALF_W, IH, "ROWS", default=10)
     cols_input = IntInputBox(COL1_X + HALF_W + 14, Y_START, HALF_W, IH, "COLUMNS", default=10)
+    
     forgiveness_dd = Dropdown(COL2_X, Y_START, IW, IH, "AGENT FORGIVENESS",
                               ["Never Forgives", "Holds Grudges", "Moderate", "Quickly Forgets"][::-1])
 
-    # Baris 2: Penglihatan Player naik ke posisi bekas Algorithm (Kiri) & Noise Dinding (Kanan)
-    player_vision_dd = Dropdown(COL1_X, Y_START + ROW_SPACING + 4, IW, IH, "PLAYER'S VISION",
-                                 ["Short", "Normal", "Far", "Very Far"])
-    wall_noise_dd = Dropdown(COL2_X, Y_START + ROW_SPACING + 4, IW, IH, "WALL NOISE PROPAGATION",
-                             ["Completely Blocked", "Strongly Reduced", "Partially Reduced", "Easily Heard"])
+    # Baris 2: Timer + Probabilitas dinding + Propagasi tembus dinding
+    timer_input = IntInputBox(COL1_X, Y_START + 4 + ROW_SPACING, HALF_W, IH, "TIMER (SECONDS)", default=300)
+    wall_prob_input = FloatInputBox(
+        COL1_X + HALF_W + 14, Y_START + ROW_SPACING + 4, HALF_W, IH, "WALL PROBABILITY", default=0.5
+    )
+    
+    wall_noise_dd = Dropdown(COL2_X, Y_START + ROW_SPACING + 4, IW, IH, "WALL PROPAGATION (PROB & NOISE)",
+                             ["Completely Blocked", "Strongly Reduced", "Partially Reduced", "Easily Pass Through"])
 
-    # Baris 3: Penglihatan Agent naik ke baris 3 (Kiri) & Keamanan Hiding Cell (Kanan)
-    agent_vision_dd = Dropdown(COL1_X, Y_START + ROW_SPACING * 2 + 8, IW, IH, "AGENT'S VISION",
-                                ["Short", "Normal", "Far", "Very Far"])
+    # Baris 3: Penglihatan Player naik ke baris 3 (Kiri) & Keamanan Hiding Cell (Kanan)
+    player_vision_dd = Dropdown(COL1_X, Y_START + ROW_SPACING * 2 + 8, IW, IH, "PLAYER'S VISION",
+                                 ["Short", "Normal", "Far", "Very Far"])
+    
     hiding_safety_dd = Dropdown(COL2_X, Y_START + ROW_SPACING * 2 + 8, IW, IH, "HIDING CELL SAFETY",
                                 ["Never Get Checked", "Mostly Being Ignored", "Usually Not Considered", "Feeling Suspicious"])
 
-    # Baris 4: Sisi kiri kosong, sisi kanan berlanjut dengan gap
+    # Baris 4: Penglihatan Agent naik ke baris 3 (Kiri), sisi kanan berlanjut dengan gap
+    agent_vision_dd = Dropdown(COL1_X, Y_START + ROW_SPACING * 3 + 12, IW, IH, "AGENT'S VISION",
+                                ["Short", "Normal", "Far", "Very Far"])
+    
     noise_sens_dd = Dropdown(COL2_X, Y_START + ROW_SPACING * 3 + 12, IW, IH, "AGENT'S SENSITIVITY TO NOISE",
                              ["Low", "Moderate", "High", "Very High"])
 
@@ -52,7 +60,7 @@ def play_menu(start_t=0.0):
 
     # --- 3. Dictionary Mappings Nilai Numerik Internal (Sesuai play_menu.md) ---
     MAP_FORGIVENESS = {"Never Forgives": 0., "Holds Grudges": 0.1, "Moderate": 0.25, "Quickly Forgets": 0.35}
-    MAP_WALL_NOISE  = {"Completely Blocked": float("inf"), "Strongly Reduced": 3, "Partially Reduced": 2, "Easily Heard": 1}
+    MAP_WALL_NOISE  = {"Completely Blocked": float("inf"), "Strongly Reduced": 3, "Partially Reduced": 2, "Easily Pass Through": 1}
     MAP_HIDING      = {"Never Get Checked": 1., "Mostly Being Ignored": 0.75, "Usually Not Considered": 0.5, "Feeling Suspicious": 0.25}
     MAP_SENSITIVITY = {"Low": 3, "Moderate": 5, "High": 7, "Very High": 9}
     MAP_P_VISION    = {"Short": 3, "Normal": 4, "Far": 5, "Very Far": 6}
@@ -98,12 +106,16 @@ def play_menu(start_t=0.0):
                 elif start_btn.is_clicked(mouse_pos):
                     rows = rows_input.value
                     cols = cols_input.value
+                    timer = timer_input.value
+                    wall_prob = wall_prob_input.value
                     
                     # Validasi batas minimal ukuran grid labirin (minimal 10)
                     if rows and rows < 10: rows_input.error = True; rows = None
                     if cols and cols < 10: cols_input.error = True; cols = None
+                    if timer < 60: timer_input.error = True; timer = None
+                    if not (0 <= wall_prob <= 1.): wall_prob_input.error = True; wall_prob = None
 
-                    if rows and cols:
+                    if rows and cols and timer and wall_prob:
                         # ─── OPSIONAL: POTONGAN KODE BYPASS TESTING MANDIRI ───
                         # Jika ingin langsung memulai game tanpa file manager dari temanmu,
                         # kamu bisa un-comment baris di bawah ini untuk testing!
@@ -123,6 +135,8 @@ def play_menu(start_t=0.0):
                             "game_dict": {
                                 "row_size": rows,
                                 "col_size": cols,
+                                "timer": timer,
+                                "wall_prob": wall_prob,
                                 "prob_decay": MAP_FORGIVENESS[forgiveness_dd.value],
                                 "wall_reduction": MAP_WALL_NOISE[wall_noise_dd.value],
                                 "hiding_cell_reduction": MAP_HIDING[hiding_safety_dd.value],
@@ -141,6 +155,8 @@ def play_menu(start_t=0.0):
                     else:
                         if not rows_input.value: rows_input.error = True
                         if not cols_input.value: cols_input.error = True
+                        if not timer_input.value: timer_input.error = True
+                        if not wall_prob_input.value: wall_prob_input.error = True
 
             # Mengatur fokus klik mouse agar dropdown tidak tembus ke widget belakang
             any_open = any(dd.open for dd in all_dropdowns)
@@ -155,6 +171,8 @@ def play_menu(start_t=0.0):
             if not consumed and not any_open:
                 rows_input.handle_event(event, mouse_pos)
                 cols_input.handle_event(event, mouse_pos)
+                timer_input.handle_event(event, mouse_pos)
+                wall_prob_input.handle_event(event, mouse_pos)
 
         # Update hover status mouse dan animasi glow
         for dd in all_dropdowns:
@@ -162,6 +180,8 @@ def play_menu(start_t=0.0):
 
         rows_input.update(dt)
         cols_input.update(dt)
+        timer_input.update(dt)
+        wall_prob_input.update(dt)
         start_btn.update(mouse_pos, dt)
         back_btn.update(mouse_pos, dt)
 
@@ -191,9 +211,11 @@ def play_menu(start_t=0.0):
         pygame.draw.line(sep_s, (*NEON_CYAN, 60), (PANEL_X + 16, sep_y), (PANEL_X + PANEL_W - 16, sep_y), 1)
         screen.blit(sep_s, (0, 0))
 
-        # Render static input boxes (Grid size)
+        # Render static input boxes
         rows_input.draw(screen)
         cols_input.draw(screen)
+        timer_input.draw(screen)
+        wall_prob_input.draw(screen)
 
         # Menggunakan urutan sorting Y terbesar-ke-terkecil (Bottom-to-Top) 
         # Biar isi list dropdown atas aman berada di depan (tidak tertimpa box bawahnya)
