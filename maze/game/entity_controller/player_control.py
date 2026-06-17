@@ -25,7 +25,7 @@ def init_player(
     
 def move_player(
     maze: list[list[dict[str, int]]],
-    move: Literal["up", "down", "left", "right"],
+    move: Literal["up", "down", "left", "right", "none"],
     wall_reduction: float,
     range_cell: int,
 ) -> None:
@@ -58,6 +58,11 @@ def vision_update(
         agent_pos=agent_pos
     )
     player_class.toggle_see_agent(player_see_agent)
+    
+def vision_init(maze: list[list[dict[str, int]]]):
+    global player_class
+    
+    player_class.cell_in_view(maze)
     
 def reset_noise() -> None:
     global player_class

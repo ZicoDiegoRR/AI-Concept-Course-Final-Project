@@ -62,6 +62,8 @@ def init_entities(
             color=a_color
         )
         
+        player_control.vision_init(maze)
+        
         last_agent_state = agent_control.get_agent_state()
         last_player_state = player_control.get_player_state()
         

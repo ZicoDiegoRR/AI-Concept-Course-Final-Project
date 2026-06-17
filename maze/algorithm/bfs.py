@@ -1,9 +1,11 @@
 from collections import deque
+import random
 
 def solve(
     grid: list[list[dict[str, int]]],
     visited: list[list[tuple[int, int]]],
     start: tuple[int, int],
+    hiding_cell_reduction: float,
 ) -> list[tuple[int, int]]:
     if not grid or not grid[0]:
         return []
@@ -25,6 +27,16 @@ def solve(
     
     while q:
         curr_pos, curr_path = q.popleft()
+        curr_x, curr_y = curr_pos
+        
+        if (
+            grid[curr_x][curr_y]["hiding"] == 1 
+            and random.random() <= hiding_cell_reduction
+            and curr_pos != start
+        ):
+            if curr_pos not in visited: visited.append(curr_pos)
+            if curr_pos not in seen: seen.add(curr_pos)
+            continue
         
         if curr_pos not in visited:
             return curr_path
@@ -33,7 +45,6 @@ def solve(
             continue
 
         seen.add(curr_pos)
-        curr_x, curr_y = curr_pos
         for (dx, dy), wall, opposite_wall in moves:
             nxt_x, nxt_y = curr_x + dx, curr_y + dy
 

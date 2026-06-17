@@ -61,7 +61,7 @@ def play_menu(start_t=0.0):
     # --- 3. Dictionary Mappings Nilai Numerik Internal (Sesuai play_menu.md) ---
     MAP_FORGIVENESS = {"Never Forgives": 0., "Holds Grudges": 0.1, "Moderate": 0.25, "Quickly Forgets": 0.35}
     MAP_WALL_NOISE  = {"Completely Blocked": float("inf"), "Strongly Reduced": 3, "Partially Reduced": 2, "Easily Pass Through": 1}
-    MAP_HIDING      = {"Never Get Checked": 1., "Mostly Being Ignored": 0.75, "Usually Not Considered": 0.5, "Feeling Suspicious": 0.25}
+    MAP_HIDING      = {"Never Get Checked": 1., "Mostly Being Ignored": 0.66, "Usually Not Considered": 0.33, "Feeling Suspicious": 0.}
     MAP_SENSITIVITY = {"Low": 3, "Moderate": 5, "High": 7, "Very High": 9}
     MAP_P_VISION    = {"Short": 3, "Normal": 4, "Far": 5, "Very Far": 6}
     MAP_A_VISION    = {"Short": 4, "Normal": 6, "Far": 8, "Very Far": 10}

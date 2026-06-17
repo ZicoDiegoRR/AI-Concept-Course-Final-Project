@@ -35,6 +35,7 @@ def init_agent(
     
 def patrol_find(
     maze: list[list[dict[str, int]]],
+    hiding_cell_reduction: float,
 ) -> None:
     global agent_class, curr_agent_path
     if agent_class is None or agent_class.get_state != "patrol":
@@ -43,7 +44,11 @@ def patrol_find(
     visited_mem = agent_class.get_checked_list
     curr_pos = agent_class.get_pos
     
-    path_to_new = bfs.solve(grid=maze, visited=visited_mem, start=curr_pos)
+    path_to_new = bfs.solve(
+        grid=maze, visited=visited_mem, 
+        start=curr_pos, 
+        hiding_cell_reduction=hiding_cell_reduction
+    )
     curr_agent_path = deque(path_to_new)
     
 def suspicious_find(
@@ -145,11 +150,17 @@ def run_agent(
     elif agent_class.get_state == "chase" and not curr_agent_path:
         agent_class.update_state(state="suspicious")
         
-        possible_path = a_star.solve(
+        possible_path_to_player = a_star.solve(
             grid=maze, start=agent_class.get_pos, 
             goal=player_pos, h_func=h_func
         )
-        possible_path = possible_path[:len(possible_path)]
+        dist_to_player = manhattan.compute(player_pos, agent_class.get_pos)
+        truncate_path = min(
+            dist_to_player,
+            len(possible_path_to_player)
+        ) if dist_to_player >= 3 else len(possible_path_to_player)
+        possible_path = possible_path_to_player[:truncate_path]
+        
         for pos in possible_path:
             agent_class.raise_prob(
                 player_pos=pos, 
@@ -199,7 +210,7 @@ def run_agent(
     if curr_agent_path:
         if agent_must_move: move_agent(maze=maze)
     else:
-        patrol_find(maze=maze)
+        patrol_find(maze=maze, hiding_cell_reduction=hiding_cell_reduction)
         
     return
 
