@@ -1,0 +1,1 @@
+from .generate_all import generate as generate_maze

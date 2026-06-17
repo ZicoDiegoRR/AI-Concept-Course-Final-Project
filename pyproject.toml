@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hns-maze"
+version = "0.0.1"
+authors = [
+  { name="Zico Diego", email="itzb4pakku1@gmail.com" },
+]
+description = "A maze-based hide-and-seek game with a model-based reflex agent as a seeker and a player as the hider."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pygame>=2.6"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ZicoDiegoRR/AI-Concept-Course-Final-Project"
+"Bug Tracker" = "https://github.com/ZicoDiegoRR/AI-Concept-Course-Final-Project/issues"
+
+[project.scripts]
+hns-play = "hns_maze.play:main"
