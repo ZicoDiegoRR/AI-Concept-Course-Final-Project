@@ -6,6 +6,7 @@ pygame.init()
 SCREEN_WIDTH  = 800
 SCREEN_HEIGHT = 600
 FPS = 60
+CELL_SIZE = 48
 
 # Neon color palette
 WHITE       = (255, 255, 255)
@@ -108,9 +109,7 @@ for _r in range(440, 0, -10):
 
 def draw_background(surface, t):
     surface.fill((2, 4, 8))
-    # draw_grid(surface=surface, t=t)
     surface.blit(VIGNETTE_SURF, (0, 0))
-    draw_corner_decorations(surface, t)
 
 def build_blurred_bg(t):
     tmp = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))

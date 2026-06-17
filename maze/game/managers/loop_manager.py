@@ -60,6 +60,20 @@ def play_hns():
         "agent_color": None,
     }
     
+    curr_visual_dict = {
+        "player_vision": None,
+        "player_known_map": None,
+        "agent_see_player": None,
+        "agent_hear_player": None,
+        "remaining_time": None,
+        "player_walking": None,
+        "view_origin": None,
+        "player_pos": None,
+        "agent_pos": None,
+        "maze_grid": None,
+        "camera_offset": None,
+    }
+    
     # AI-generated: throttle gameplay ticks to a fixed interval
     tick_interval = 0.125
     tick_accumulator = 0.0
@@ -144,6 +158,11 @@ def play_hns():
                     wall_prob=maze_dict["wall_prob"],
                     hiding_prob=maze_dict["hiding_prob"]
                 )
+                curr_visual_dict["maze_grid"] = game_dict["maze"]
+                create_visual(
+                    rows=maze_dict["rows"],
+                    cols=maze_dict["cols"]
+                )
                 
                 initiated_maze = True
 
@@ -166,6 +185,13 @@ def play_hns():
             curr_game_state["agent_color"] = agent_dict["color"]
             curr_game_state["timer"] = timer
             
+            curr_visual_dict["player_vision"] = curr_player_state["vision"]
+            curr_visual_dict["player_known_map"] = curr_player_state["known_map"]
+            curr_visual_dict["agent_see_player"] = curr_agent_state["see_player"]
+            curr_visual_dict["agent_hear_player"] = curr_agent_state["hear_player"]
+            curr_visual_dict["remaining_time"] = timer
+            curr_visual_dict["player_walking"] = curr_player_state["speed"] == 1.
+            
             # AI-generated: frame accumulation to determine one second
             frame_per_second = clock.tick(FPS)
             frame_dt = frame_per_second / 1000.0
@@ -182,7 +208,18 @@ def play_hns():
                 game_dict=curr_game_state,
                 dt=frame_dt,
             )
+            curr_visual_dict["view_origin"] = state_dict["view_origin"]
+            curr_visual_dict["player_pos"] = state_dict["player_pos"]
+            curr_visual_dict["agent_pos"] = state_dict["agent_pos"]
+            curr_visual_dict["camera_offset"] = state_dict["camera_offset"]
             
+            render_visual(
+                curr_visual_dict, dt=frame_dt_accumulate,
+            )
+            
+            flip_pygame()
+            
+            # AI-generated: multiple-tick-update handler
             if state_dict["move"] != "none":
                 pending_move = state_dict["move"]
             if state_dict["pressed_movement_toggle"]:

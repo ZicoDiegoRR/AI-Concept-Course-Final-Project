@@ -32,6 +32,8 @@ class Agent:
         self.prob_map = [[0.25 for _ in range(col_size)] for _ in range(row_size)]
         self.checked_list = [(self.curr_row, self.curr_col)]
         self.max_mem = max_cell_mem
+        self.hear_player = False
+        self.see_player = False
 
     def cell_in_view(
         self,
@@ -200,6 +202,18 @@ class Agent:
             self.curr_view_id = self.direction_collection.index(direction)
             return
         
+    def update_hear_player(
+        self,
+        val: bool,
+    ) -> None:
+        self.hear_player = val
+        
+    def update_see_player(
+        self,
+        val: bool,
+    ) -> None:
+        self.see_player = val
+        
     def move_to(
         self, 
         new_row: int,
@@ -256,3 +270,11 @@ class Agent:
     @property
     def get_state(self):
         return self.state_collection[self.curr_state_id]
+    
+    @property
+    def get_hear_player(self):
+        return self.hear_player
+    
+    @property
+    def get_see_player(self):
+        return self.see_player

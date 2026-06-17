@@ -108,6 +108,7 @@ def run_agent(
     hiding_cell_reduction: float,
     range_raise_prob: int,
     prob_decay: float,
+    agent_must_move: bool = True,
 ) -> None:
     global agent_class, curr_agent_path, h_func
     if agent_class is None:
@@ -125,6 +126,8 @@ def run_agent(
         player_pos, agent_class.get_curr_cell_in_view, maze
     )
     
+    agent_class.update_see_player(agent_spot_player)
+    
     # Sees player or in "chase" mode and either noticing player before disappearing or still trying to chase
     if agent_spot_player or (
         agent_class.get_state == "chase" and (
@@ -135,7 +138,7 @@ def run_agent(
         agent_class.update_state(state="chase")
         if agent_spot_player or agent_notice_player_disappear:
             chase_find(maze=maze, player_pos=player_pos, exclude_start=True)
-        move_agent(maze=maze)
+        if agent_must_move: move_agent(maze=maze)
         return
     
     # In "chase" mode but has nowhere to go
@@ -161,6 +164,8 @@ def run_agent(
     # Get suspicious check        
     agent_heard_player = agent_heard(player_noise, curr_pos)
     raised_prob_map = agent_raised_prob(agent_class.get_prob_map)
+    
+    agent_class.update_hear_player(agent_heard_player)
 
     # Hears something or in "suspicious" mode 
     if agent_heard_player or agent_class.get_state == "suspicious" or raised_prob_map:
@@ -187,12 +192,12 @@ def run_agent(
             agent_class.update_state(state="patrol")
             return
         
-        move_agent(maze=maze)
+        if agent_must_move: move_agent(maze=maze)
         return
     
     # Patrol
     if curr_agent_path:
-        move_agent(maze=maze)
+        if agent_must_move: move_agent(maze=maze)
     else:
         patrol_find(maze=maze)
         
@@ -208,5 +213,7 @@ def get_agent_state() -> dict:
         "speed": agent_class.get_speed,
         "vision": agent_class.get_curr_cell_in_view,
         "prob_map": agent_class.get_prob_map,
+        "hear_player": agent_class.get_hear_player,
+        "see_player": agent_class.get_see_player,
     }
     return state_dict

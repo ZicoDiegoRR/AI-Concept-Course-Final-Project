@@ -19,7 +19,7 @@ from .backbone import (
     SCREEN_WIDTH, SCREEN_HEIGHT,
     NEON_CYAN, NEON_PINK, NEON_PURPLE, NEON_GREEN,
     DIM_CYAN, DIM_PINK, DIM_GREEN,
-    WHITE, TEXT_COLOR,
+    WHITE, TEXT_COLOR, CELL_SIZE,
     font_title, font_button, font_hud, font_sub,
     draw_neon_text, draw_background, build_blurred_bg,
     SCANLINE_SURF, VIGNETTE_SURF,
@@ -28,7 +28,6 @@ from .backbone import (
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-CELL_SIZE   = 48       # pixels per cell
 CAMERA_LERP = 0.1     # camera smoothness (0 = no follow, 1 = instant snap)
 
 WALL_COLOR        = NEON_CYAN
@@ -104,6 +103,10 @@ class MazeRenderer:
 
         self._tick_interval = 0.5
 
+        # Maze wall caching (performance optimization)
+        self._maze_cache_surface = None
+        self._maze_cache_id = None
+
     # ── Public API ────────────────────────────────────────────────────────────
 
     def update(self, game_dict: dict, dt: float) -> dict:
@@ -161,12 +164,11 @@ class MazeRenderer:
             self._agent_visual_pos,
             player_color, agent_color
         )
-        self._render_hud(timer)
 
         # CRT scanline overlay
         screen.blit(SCANLINE_SURF, (0, 0))
 
-        pygame.display.flip()
+        # pygame.display.flip()
 
         # ── Read input ────────────────────────────────────────────────────────
         if not self._player_moving:
@@ -183,12 +185,22 @@ class MazeRenderer:
             next_state = 0
             show_end_screen(status=game_status)
 
+        view_origin_row = int(self.camera.y / CELL_SIZE)
+        view_origin_col = int(self.camera.x / CELL_SIZE)
+        camera_offset_x = self.camera.x - view_origin_col * CELL_SIZE
+        camera_offset_y = self.camera.y - view_origin_row * CELL_SIZE
+
         return {
             "move":                    move,
             "pressed_movement_toggle": toggle_movement,
             "state":                   next_state,
             "player_moving":           self._player_moving,
             "agent_moving":            self._agent_moving,
+            # Provide camera-origin in cell coordinates for external overlays
+            "view_origin": (view_origin_row, view_origin_col),
+            "camera_offset": (camera_offset_x, camera_offset_y),
+            "player_pos": player_pos,
+            "agent_pos": agent_pos,
         }
 
     # ── Interpolation ─────────────────────────────────────────────────────────
@@ -280,37 +292,67 @@ class MazeRenderer:
 
     def _render_maze(self, maze: list):
         """
-        Render maze walls using OR logic:
-        render_wall = current_cell_has_wall OR neighbor_cell_has_wall
+        Render maze walls by blitting a cached surface.
+        Cache is invalidated if maze object reference changes.
+        """
+        maze_id = id(maze)
+        
+        # Rebuild cache if maze changed
+        if self._maze_cache_id != maze_id:
+            self._maze_cache_surface = self._build_maze_surface(maze)
+            self._maze_cache_id = maze_id
+        
+        # Blit cached maze surface, accounting for camera offset
+        cam_x = int(self.camera.x)
+        cam_y = int(self.camera.y)
+        screen.blit(self._maze_cache_surface, (-cam_x, -cam_y))
+
+    def _build_maze_surface(self, maze: list) -> pygame.Surface:
+        """
+        Build a world-space surface with all maze walls rendered.
+        This is called once per unique maze structure, then cached.
         """
         rows = len(maze)
         cols = len(maze[0]) if rows > 0 else 0
-
+        
+        # Create world-space surface
+        width = cols * CELL_SIZE
+        height = rows * CELL_SIZE
+        maze_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        
         for r in range(rows):
             for c in range(cols):
                 cell = maze[r][c]
-                sx, sy = self.camera.cell_top_left(r, c)
-                sx, sy = int(sx), int(sy)
+                sx, sy = c * CELL_SIZE, r * CELL_SIZE
 
                 # Top wall
                 neighbor_up = maze[r-1][c]["down"] if r > 0 else 1
                 if cell["up"] or neighbor_up:
-                    self._draw_wall(sx, sy, sx + CELL_SIZE, sy)
+                    self._draw_wall_on_surface(maze_surface, sx, sy, sx + CELL_SIZE, sy)
 
                 # Bottom wall
                 neighbor_down = maze[r+1][c]["up"] if r < rows - 1 else 1
                 if cell["down"] or neighbor_down:
-                    self._draw_wall(sx, sy + CELL_SIZE, sx + CELL_SIZE, sy + CELL_SIZE)
+                    self._draw_wall_on_surface(maze_surface, sx, sy + CELL_SIZE, sx + CELL_SIZE, sy + CELL_SIZE)
 
                 # Left wall
                 neighbor_left = maze[r][c-1]["right"] if c > 0 else 1
                 if cell["left"] or neighbor_left:
-                    self._draw_wall(sx, sy, sx, sy + CELL_SIZE)
+                    self._draw_wall_on_surface(maze_surface, sx, sy, sx, sy + CELL_SIZE)
 
                 # Right wall
                 neighbor_right = maze[r][c+1]["left"] if c < cols - 1 else 1
                 if cell["right"] or neighbor_right:
-                    self._draw_wall(sx + CELL_SIZE, sy, sx + CELL_SIZE, sy + CELL_SIZE)
+                    self._draw_wall_on_surface(maze_surface, sx + CELL_SIZE, sy, sx + CELL_SIZE, sy + CELL_SIZE)
+        
+        return maze_surface
+
+    def _draw_wall_on_surface(self, surface: pygame.Surface, x1: int, y1: int, x2: int, y2: int):
+        """Draw a single neon wall segment on a given surface (for caching)."""
+        # Glow layer
+        pygame.draw.line(surface, (*WALL_COLOR, 40), (x1, y1), (x2, y2), WALL_WIDTH + 4)
+        # Core line
+        pygame.draw.line(surface, WALL_COLOR, (x1, y1), (x2, y2), WALL_WIDTH)
 
     def _draw_wall(self, x1: int, y1: int, x2: int, y2: int):
         """Draw a single neon wall segment with a subtle glow."""

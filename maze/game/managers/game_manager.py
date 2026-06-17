@@ -98,15 +98,21 @@ def run_entities(
         
     player_pos = curr_player_state["curr_pos"]
     player_noise = curr_player_state["player_noise"]
+    
     if not agent_still_moving:
-        agent_control.run_agent(
-            maze=maze, player_pos=player_pos, 
-            player_noise=player_noise, 
-            hiding_timer_run_out=hiding_timer_runs_out, 
-            wall_reduction=wall_reduction, 
-            hiding_cell_reduction=hiding_cell_reduction, 
-            range_raise_prob=range_raise_prob, prob_decay=prob_decay,
-        )
+        agent_must_move = True
+    else:
+        agent_must_move = False
+
+    agent_control.run_agent(
+        maze=maze, player_pos=player_pos, 
+        player_noise=player_noise, 
+        hiding_timer_run_out=hiding_timer_runs_out, 
+        wall_reduction=wall_reduction, 
+        hiding_cell_reduction=hiding_cell_reduction, 
+        range_raise_prob=range_raise_prob, prob_decay=prob_decay,
+        agent_must_move=agent_must_move,
+    )
     curr_agent_state = agent_control.get_agent_state()
     
     agent_pos = curr_agent_state["curr_pos"]
