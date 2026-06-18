@@ -17,3 +17,4 @@ hns-play
 
 # Requirements
 1. Python >= 3.8
+2. PyGame >= 2.6
