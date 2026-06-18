@@ -65,12 +65,17 @@ def suspicious_find(
     for i in range(len(prob_map)):
         for j in range(len(prob_map[0])):
             if prob_map[i][j] > 0.25: # By design
-                heapq.heappush_max(raised_prob_cell, (prob_map[i][j], i, j))
+                heapq.heappush(raised_prob_cell, 
+                    (
+                        h_func(agent_class.get_pos, (i, j)),
+                        -prob_map[i][j], i, j
+                    )
+                )
                 
     if not raised_prob_cell:
         return
     
-    to_check = list(raised_prob_cell[0])[1:]
+    to_check = list(raised_prob_cell[0])[2:]
     
     path_to_site = a_star.solve(
         grid=maze, start=curr_pos, 

@@ -39,7 +39,7 @@ def init_entities(
 
         a_vision_range = agent_dict["vision_range"]
         a_h_func_init = agent_dict["h_func_init"]
-        a_max_mem = agent_dict["max_mem"]
+        a_max_mem = int(agent_dict["max_mem"] * (row_size/10 * col_size/10)**0.5)
         a_color = agent_dict["color"]
         
         player_control.init_player(

@@ -59,7 +59,7 @@ def play_menu(start_t=0.0):
                            NEON_PURPLE, (65, 0, 95))
 
     # --- 3. Dictionary Mappings Nilai Numerik Internal (Sesuai play_menu.md) ---
-    MAP_FORGIVENESS = {"Never Forgives": 0., "Holds Grudges": 0.1, "Moderate": 0.25, "Quickly Forgets": 0.35}
+    MAP_FORGIVENESS = {"Never Forgives": 0., "Holds Grudges": 0.075, "Moderate": 0.125, "Quickly Forgets": 0.175}
     MAP_WALL_NOISE  = {"Completely Blocked": float("inf"), "Strongly Reduced": 3, "Partially Reduced": 2, "Easily Pass Through": 1}
     MAP_HIDING      = {"Never Get Checked": 1., "Mostly Being Ignored": 0.66, "Usually Not Considered": 0.33, "Feeling Suspicious": 0.}
     MAP_SENSITIVITY = {"Low": 3, "Moderate": 5, "High": 7, "Very High": 9}
