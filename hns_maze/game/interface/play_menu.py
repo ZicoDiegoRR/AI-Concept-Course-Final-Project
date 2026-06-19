@@ -19,8 +19,8 @@ def play_menu(start_t=0.0):
 
     # --- 2. Inisialisasi Komponen UI (Murni Fokus ke Hide & Seek) ---
     # Baris 1: Grid (Kiri) & Amnesti AI (Kanan)
-    rows_input = IntInputBox(COL1_X, Y_START, HALF_W, IH, "ROWS", default=10)
-    cols_input = IntInputBox(COL1_X + HALF_W + 14, Y_START, HALF_W, IH, "COLUMNS", default=10)
+    rows_input = IntInputBox(COL1_X, Y_START, HALF_W, IH, "ROWS (10-450)", default=10)
+    cols_input = IntInputBox(COL1_X + HALF_W + 14, Y_START, HALF_W, IH, "COLS (10-450)", default=10)
     
     forgiveness_dd = Dropdown(COL2_X, Y_START, IW, IH, "AGENT FORGIVENESS",
                               ["Never Forgives", "Holds Grudges", "Moderate", "Quickly Forgets"][::-1])
@@ -110,8 +110,8 @@ def play_menu(start_t=0.0):
                     wall_prob = wall_prob_input.value
                     
                     # Validasi batas minimal ukuran grid labirin (minimal 10)
-                    if rows and rows < 10: rows_input.error = True; rows = None
-                    if cols and cols < 10: cols_input.error = True; cols = None
+                    if rows and not (10 <= rows <= 450): rows_input.error = True; rows = None
+                    if cols and not (10 <= cols <= 450): cols_input.error = True; cols = None
                     if timer < 60: timer_input.error = True; timer = None
                     if not (0 <= wall_prob <= 1.): wall_prob_input.error = True; wall_prob = None
 
