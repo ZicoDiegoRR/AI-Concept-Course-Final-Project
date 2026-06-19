@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hns-maze"
-version = "0.0.2.post2"
+version = "0.0.3"
 authors = [
   { name="Zico Diego", email="itzb4pakku1@gmail.com" },
 ]
