@@ -109,6 +109,11 @@ def move_agent(
     nxt_x, nxt_y = curr_agent_path.popleft()
     agent_class.move_to(new_row=nxt_x, new_col=nxt_y, maze=maze)
     
+def decay_prob(d_prob: float) -> None:
+    global agent_class
+    
+    agent_class.decay_prob(d_prob)
+    
 def run_agent(
     maze: list[list[dict[str, int]]],
     player_pos: tuple[int, int],
@@ -125,7 +130,6 @@ def run_agent(
         raise ValueError("Agent class can't be None.")
     
     curr_pos = agent_class.get_pos
-    agent_class.decay_prob(d_prob=prob_decay)
     
     # Get chase check
     agent_spot_player = bool(

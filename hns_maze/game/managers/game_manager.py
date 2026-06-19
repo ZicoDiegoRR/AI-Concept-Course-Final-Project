@@ -39,7 +39,7 @@ def init_entities(
 
         a_vision_range = agent_dict["vision_range"]
         a_h_func_init = agent_dict["h_func_init"]
-        a_max_mem = int(agent_dict["max_mem"] * (row_size/10 * col_size/10)**0.5)
+        a_max_mem = int(agent_dict["max_mem"] * (row_size/10 * col_size/10))
         a_color = agent_dict["color"]
         
         player_control.init_player(
@@ -90,11 +90,9 @@ def run_entities(
     if curr_player_state["hiding"]:
         if player_hiding_timer == float("inf"):
             player_hiding_timer = 60
-        else:
-            if player_hiding_timer <= 0:
-                hiding_timer_runs_out = True
-            else:
-                player_hiding_timer -= 1
+        elif player_hiding_timer <= 0:
+            player_hiding_timer = 60
+            hiding_timer_runs_out = True
     else:
         player_hiding_timer = float("inf")
         
@@ -124,6 +122,14 @@ def run_entities(
     
     player_control.reset_noise()
     return get_entity_states()
+
+def decrement_hiding_timer(decrement: int = 1) -> None:
+    global player_hiding_timer
+    
+    player_hiding_timer = max(0, player_hiding_timer - decrement)
+    
+def decay_agent_prob() -> None:
+    agent_control.decay_prob(prob_decay)
 
 def get_entity_states() -> tuple[dict, dict]:    
     return last_player_state, last_agent_state

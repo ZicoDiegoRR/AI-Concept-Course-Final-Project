@@ -203,6 +203,8 @@ def play_hns():
                 seconds = int(frame_dt_accumulate)
                 frame_dt_accumulate -= seconds
                 timer = max(0, timer - seconds)
+                decrement_hiding_timer(seconds)
+                decay_agent_prob()
 
             state_dict = render_gameplay(
                 game_dict=curr_game_state,
