@@ -6,7 +6,7 @@ A maze-based hide-and-seek game with a model-based reflex agent as a seeker and 
 Simply download HnS through `pip`.
 
 ```bash
-pip install hns-maze
+pip install --upgrade hns-maze
 ```
 
 To run it, just execute:
