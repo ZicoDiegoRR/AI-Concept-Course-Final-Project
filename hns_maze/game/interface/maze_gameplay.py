@@ -183,7 +183,7 @@ class MazeRenderer:
         map_pressed = raw_input["map_pressed"]
         
         # ── Render win/lose screen (if true) ──────────────────────────────────
-        next_state = 3 if game_status == "running" else 0
+        next_state = 3 if game_status == "running" and raw_input["state"] != 0 else 0
         if game_status != "running":
             next_state = 0
             show_end_screen(status=game_status)
@@ -535,7 +535,7 @@ class MazeRenderer:
                 elif event.key in (pygame.K_d, pygame.K_RIGHT):
                     move = "right"
 
-                if event.type == pygame.KEYDOWN and event.key == FULLSCREEN_MAP_KEY:
+                if event.key == FULLSCREEN_MAP_KEY:
                     map_pressed = True
 
         return {
