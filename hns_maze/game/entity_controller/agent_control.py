@@ -64,7 +64,7 @@ def suspicious_find(
     raised_prob_cell = []
     for i in range(len(prob_map)):
         for j in range(len(prob_map[0])):
-            if prob_map[i][j] > 0.25: # By design
+            if (i, j) != agent_class.get_pos and prob_map[i][j] > 0.25: # By design
                 heapq.heappush(raised_prob_cell, 
                     (
                         h_func(agent_class.get_pos, (i, j)),
@@ -112,7 +112,8 @@ def move_agent(
 def decay_prob(d_prob: float) -> None:
     global agent_class
     
-    agent_class.decay_prob(d_prob)
+    if curr_agent_path:
+        agent_class.decay_prob(d_prob)
     
 def run_agent(
     maze: list[list[dict[str, int]]],

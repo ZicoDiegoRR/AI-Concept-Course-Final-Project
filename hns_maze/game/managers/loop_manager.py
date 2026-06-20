@@ -199,6 +199,7 @@ def play_hns():
             frame_dt_accumulate += frame_dt
 
             # AI-generated: decrement the timer once per full second
+            seconds = 0
             if frame_dt_accumulate >= 1.0:
                 seconds = int(frame_dt_accumulate)
                 frame_dt_accumulate -= seconds
@@ -216,7 +217,7 @@ def play_hns():
             curr_visual_dict["camera_offset"] = state_dict["camera_offset"]
             
             render_visual(
-                curr_visual_dict, dt=frame_dt_accumulate,
+                curr_visual_dict, dt=seconds,
             )
             
             flip_pygame()

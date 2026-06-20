@@ -45,6 +45,10 @@ class Agent:
         rows = len(maze)
         cols = len(maze[0])
         x, y = self.curr_row, self.curr_col
+        if maze[x][y]["hiding"] == 1:
+            self.curr_view_cell = [(x, y)]
+            return
+        
         direction = self.direction_collection[self.curr_view_id]
         dx, dy = MOVEMENT[direction]
         perp_dx, perp_dy = -dy, dx
@@ -93,6 +97,9 @@ class Agent:
             connected: list[tuple[int, int]] = []
             for idx, (itx, ity) in enumerate(ray):
                 if not in_bounds(itx, ity):
+                    break
+                
+                if maze[itx][ity]["hiding"] == 1:
                     break
 
                 if idx == 0:
