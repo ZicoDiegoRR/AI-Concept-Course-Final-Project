@@ -72,6 +72,8 @@ def play_hns():
         "agent_pos": None,
         "maze_grid": None,
         "camera_offset": None,
+        "map_pressed": None,
+        "fps": None,
     }
     
     # AI-generated: throttle gameplay ticks to a fixed interval
@@ -165,6 +167,11 @@ def play_hns():
                 )
                 
                 initiated_maze = True
+                if maze_dict["rows"] * maze_dict["cols"] >= 100**2:
+                    print("\n!--- WARNING ---!")
+                    print("Inserting a large maze size exceeding or equal to 10,000"
+                          + " cells may cause lags, extreme delay, and instability.")
+                    print("Depending on your hardware, this can freeze the game unintentionally.")
 
             init_entities(
                 player_dict=player_dict,
@@ -197,6 +204,7 @@ def play_hns():
             frame_dt = frame_per_second / 1000.0
             tick_accumulator += frame_dt
             frame_dt_accumulate += frame_dt
+            fps = int(clock.get_fps())
 
             # AI-generated: decrement the timer once per full second
             seconds = 0
@@ -215,6 +223,8 @@ def play_hns():
             curr_visual_dict["player_pos"] = state_dict["player_pos"]
             curr_visual_dict["agent_pos"] = state_dict["agent_pos"]
             curr_visual_dict["camera_offset"] = state_dict["camera_offset"]
+            curr_visual_dict["map_pressed"] = state_dict["map_pressed"]
+            curr_visual_dict["fps"] = fps
             
             render_visual(
                 curr_visual_dict, dt=seconds,

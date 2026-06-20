@@ -15,6 +15,22 @@ To run it, just execute:
 hns-play
 ```
 
+# Controls
+
+`W/Up`                  — Move up
+
+`S/Down`                — Move down
+
+`A/Left`                — Move left
+
+`D/Right`               — Move right
+
+`C`                     — Toggle walking/sneaking
+
+`M`                     — Open/close map
+
+`Scroll Up/Scroll Down` — Zoom-in/zoom-out the map
+
 # Requirements
 1. Python >= 3.8
 2. PyGame >= 2.6

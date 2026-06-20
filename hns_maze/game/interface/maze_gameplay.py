@@ -40,6 +40,7 @@ AGENT_VISION_COLOR  = (255, 0, 180, 25)   # RGBA — dim pink, more transparent
 
 GLOW_RADIUS_FACTOR  = 0.55   # glow size relative to cell size
 ENTITY_RADIUS_FACTOR = 0.30  # entity circle size relative to cell size
+FULLSCREEN_MAP_KEY    = pygame.K_m
 
 
 # ── Camera ───────────────────────────────────────────────────────────────────
@@ -171,13 +172,15 @@ class MazeRenderer:
         # pygame.display.flip()
 
         # ── Read input ────────────────────────────────────────────────────────
+        raw_input = self._read_input()
         if not self._player_moving:
-            raw_input = self._read_input()
             move = raw_input["move"]
             toggle_movement = raw_input["pressed_movement_toggle"]
         else:
             move = "none"
             toggle_movement = False
+            
+        map_pressed = raw_input["map_pressed"]
         
         # ── Render win/lose screen (if true) ──────────────────────────────────
         next_state = 3 if game_status == "running" else 0
@@ -193,6 +196,7 @@ class MazeRenderer:
         return {
             "move":                    move,
             "pressed_movement_toggle": toggle_movement,
+            "map_pressed":             map_pressed,
             "state":                   next_state,
             "player_moving":           self._player_moving,
             "agent_moving":            self._agent_moving,
@@ -507,6 +511,7 @@ class MazeRenderer:
         move = "none"
         pressed_toggle = False
         state = 3  # default: gameplay running
+        map_pressed = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -530,10 +535,14 @@ class MazeRenderer:
                 elif event.key in (pygame.K_d, pygame.K_RIGHT):
                     move = "right"
 
+                if event.type == pygame.KEYDOWN and event.key == FULLSCREEN_MAP_KEY:
+                    map_pressed = True
+
         return {
             "move": move,
             "pressed_movement_toggle": pressed_toggle,
             "state": state,
+            "map_pressed": map_pressed,
         }
 
 
